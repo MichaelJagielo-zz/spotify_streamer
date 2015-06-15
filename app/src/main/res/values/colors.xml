@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="actionbar_background_light">#ccffffff</color>
+    <color name="actionbar_background_dark">#cc000000</color>
+    <color name="drag_active_color">#80cccccc</color>
+    <color name="drop_down_color">#ffcccccc</color>
+    <color name="black">#cc000000</color>
+    <color name="exp_background">#80cce6</color>
+    <color name="deep">#360440</color>
+    <color name="bright">#D4C02C</color>
+    <color name="med_blue">#003B95</color>
+    <color name="beige">#E4E86F</color>
+    <color name="background_toast">#A49D80</color>
+
+    <color name="button_normal">#ff9b26</color>
+    <color name="button_capstone">#ff3414</color>
+    <color name="white">#fef6ff</color>
+
+
+    <color name="grey_text">#a29da3</color>
+
+</resources>

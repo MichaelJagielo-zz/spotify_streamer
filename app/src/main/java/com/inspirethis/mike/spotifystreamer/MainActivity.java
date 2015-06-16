@@ -1,18 +1,25 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
 
 public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+        if(savedInstanceState == null) {
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ArtistSearchFragment artistSearchFragment = new ArtistSearchFragment();
+            ft.add(R.id.displayArtistList   , artistSearchFragment, "ArtistSearchFragment");
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        }
     }
 
 

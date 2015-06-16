@@ -14,14 +14,14 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 /**
- * Created by mike on 6/12/15.
+ * Created by mike on 6/15/15.
  */
-public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
+public class TopTenListViewAdapter extends ArrayAdapter<TrackItem> {
 
     Context context;
 
-    public ArtistListViewAdapter(Context context, int resourceId,
-                                 List<ArtistItem> items) {
+    public TopTenListViewAdapter(Context context, int resourceId,
+                                 List<TrackItem> items) {
         super(context, resourceId, items);
         this.context = context;
     }
@@ -29,30 +29,33 @@ public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
     /*private view holder class*/
     private class ViewHolder {
         ImageView imageView;
-        TextView txtTitle;
+        TextView albumTitle;
+        TextView trackTitle;
 
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder = null;
-        ArtistItem artistItem = getItem(position);
+        TrackItem trackItem = getItem(position);
 
         LayoutInflater mInflater = (LayoutInflater) context
                 .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.artist_item_list, null);
+            convertView = mInflater.inflate(R.layout.topten_item_list, null);
             holder = new ViewHolder();
 
-            holder.txtTitle = (TextView) convertView.findViewById(R.id.artist);
+            holder.albumTitle = (TextView) convertView.findViewById(R.id.album);
+            holder.trackTitle = (TextView) convertView.findViewById(R.id.track);
             holder.imageView = (ImageView) convertView.findViewById(R.id.list_image);
             convertView.setTag(holder);
         } else
             holder = (ViewHolder) convertView.getTag();
 
-        holder.txtTitle.setText(artistItem.getName());
+        holder.albumTitle.setText(trackItem.getAlbum());
+        holder.trackTitle.setText(trackItem.getTrack());
 
-        if (artistItem.getImage_path() != null && !artistItem.getImage_path().toString().equals(""))
-            Picasso.with(context).load(artistItem.getImage_path()).into(holder.imageView);
+        if (trackItem.getImage_path_small() != null && !trackItem.getImage_path_small().toString().equals(""))
+            Picasso.with(context).load(trackItem.getImage_path_small()).into(holder.imageView);
         else
             holder.imageView.setImageResource(R.mipmap.greyscale_thumb);
 

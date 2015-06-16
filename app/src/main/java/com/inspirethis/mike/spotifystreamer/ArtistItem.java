@@ -3,12 +3,12 @@ package com.inspirethis.mike.spotifystreamer;
 /**
  * Created by mike on 6/12/15.
  */
-public class RowItem {
+public class ArtistItem {
     private String spotifyId;
     private String name;
     private String image_path;
 
-    public RowItem(String spotifyId, String name, String image_path) {
+    public ArtistItem(String spotifyId, String name, String image_path) {
         this.spotifyId = spotifyId;
         this.name = name;
         this.image_path = image_path;

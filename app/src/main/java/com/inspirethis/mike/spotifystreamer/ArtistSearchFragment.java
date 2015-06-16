@@ -1,6 +1,7 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.app.SearchManager;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -25,14 +26,14 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
+public class ArtistSearchFragment extends Fragment implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
 
     private ArtistListViewAdapter mMusicListAdapter;
-    private ArrayList<RowItem> rowItems;
+    private ArrayList<ArtistItem> artistItems;
     SearchView searchView;
     SearchManager searchManager;
 
-    public MainActivityFragment() {
+    public ArtistSearchFragment() {
     }
 
     @Override
@@ -60,14 +61,14 @@ public class MainActivityFragment extends Fragment implements SearchView.OnQuery
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
-        rowItems = new ArrayList<>();
+        artistItems = new ArrayList<>();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mMusicListAdapter = new ArtistListViewAdapter(getActivity(), R.layout.music_item_list, rowItems);
+        mMusicListAdapter = new ArtistListViewAdapter(getActivity(), R.layout.artist_item_list, artistItems);
 
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
@@ -110,11 +111,24 @@ public class MainActivityFragment extends Fragment implements SearchView.OnQuery
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 //TODO: search artist top ten data here, artist name, spotifyID, artistThumbnailImage path
 
-                String musicSelection = mMusicListAdapter.getItem(position).getName();
-                Toast.makeText(getActivity(), musicSelection, Toast.LENGTH_SHORT).show();
+                String artist = mMusicListAdapter.getItem(position).getName();
+                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
+
+                Bundle bundle = new Bundle();
+                bundle.putString("artist", artist);
+                Log.d("","artist: " + artist);
+                TopTenSearchFragment topTenSearchFragment = (TopTenSearchFragment) getFragmentManager().findFragmentById(R.id.displayTrackList);
+                if(topTenSearchFragment == null) {
+                    final FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    topTenSearchFragment = new TopTenSearchFragment();
+                    topTenSearchFragment.setArguments(bundle);
+                    ft.replace(R.id.displayArtistList, topTenSearchFragment, "TopTenSearchFragment");
+                    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                    ft.addToBackStack(null);
+                    ft.commit();
+                }
             }
         });
-
         return rootView;
     }
 
@@ -151,7 +165,7 @@ public class MainActivityFragment extends Fragment implements SearchView.OnQuery
                     String url = "";
                     if (a.images.size() > 0)
                         url = a.images.get(0).url;
-                    rowItems.add(new RowItem(a.id, a.name, url));
+                    artistItems.add(new ArtistItem(a.id, a.name, url));
                 }
             }
         }

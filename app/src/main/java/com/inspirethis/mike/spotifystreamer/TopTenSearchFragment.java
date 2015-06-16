@@ -1,6 +1,7 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,7 @@ public class TopTenSearchFragment extends Fragment {
 
     private TopTenListViewAdapter mToptenAdapter;
     private ArrayList<TrackItem> trackItems;
+    private String mArtist;
 
     public TopTenSearchFragment() {}
 
@@ -47,9 +49,9 @@ public class TopTenSearchFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if(bundle != null) {
-            final String artist = bundle.getString("artist");
-            Log.d("top 10: ", artist);
-            performSearch(artist);
+            mArtist = bundle.getString("artist");
+            Log.d("top 10: ", mArtist);
+            performSearch(mArtist);
         }
     }
 
@@ -69,8 +71,27 @@ public class TopTenSearchFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 //TODO: save selected artist data here, artist name, album, track, artist image paths to play selection
 
-                String track = mToptenAdapter.getItem(position).getTrack();
-                Toast.makeText(getActivity(), track, Toast.LENGTH_SHORT).show();
+//                String artist = mToptenAdapter.getItem(position).getName();
+//                String album = mToptenAdapter.getItem(position).getAlbum();
+//                String track_image_path = mToptenAdapter.getItem(position).getImage_path_large();
+//                String trackName = mToptenAdapter.getItem(position).getTrack();
+
+                TrackItem trackItem = mToptenAdapter.getItem(position); // TODO: make trackItem parcelable and pass it in the bundle
+
+//                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("track item", trackItem);
+                TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.playTrack);
+                if(trackPlayerFragment == null) {
+                    final FragmentTransaction ft = getFragmentManager().beginTransaction();
+                    trackPlayerFragment = new TrackPlayerFragment();
+                    trackPlayerFragment.setArguments(bundle);
+                    ft.replace(R.id.displayArtistList, trackPlayerFragment, "trackPlayerFragment");
+                    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                    ft.addToBackStack(null);
+                    ft.commit();
+                }
             }
         });
         return rootView;
@@ -118,7 +139,7 @@ public class TopTenSearchFragment extends Fragment {
                         if (url_large_image.equals(""))
                             url_large_image = t.album.images.get(0).url;
 
-                        trackItems.add(new TrackItem(t.album.name, t.name, url_small_image, url_large_image));
+                        trackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
                     }
                 }
             }

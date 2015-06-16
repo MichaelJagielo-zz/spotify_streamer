@@ -4,4 +4,8 @@
     <string name="search_artist_hint">Search Artist...</string>
     <string name="search_artist_label">search artist label</string>
     <string name="no_artists_found">No artists were found</string>
+    <string name="play">play</string>
+    <string name="prev">prev</string>
+    <string name="next">next</string>
+    <string name="track_image">track image</string>
 </resources>

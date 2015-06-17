@@ -3,7 +3,7 @@
     <string name="action_settings">Settings</string>
     <string name="search_artist_hint">Search Artist...</string>
     <string name="search_artist_label">search artist label</string>
-    <string name="no_artists_found">No artists were found</string>
+    <string name="no_artists_found">No artists were found, please refine your search</string>
     <string name="play">play</string>
     <string name="prev">prev</string>
     <string name="next">next</string>

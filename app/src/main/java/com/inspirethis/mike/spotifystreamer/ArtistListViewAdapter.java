@@ -14,6 +14,7 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 /**
+ * ArtistListViewAdapter is custom ArrayAdapter for displaying the list of ArtistS query
  * Created by mike on 6/12/15.
  */
 public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
@@ -26,11 +27,9 @@ public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
         this.context = context;
     }
 
-    /*private view holder class*/
     private class ViewHolder {
         ImageView imageView;
         TextView txtTitle;
-
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -40,7 +39,7 @@ public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
         LayoutInflater mInflater = (LayoutInflater) context
                 .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.artist_item_list, null);
+            convertView = mInflater.inflate(R.layout.artist_list_item, null);
             holder = new ViewHolder();
 
             holder.txtTitle = (TextView) convertView.findViewById(R.id.artist);
@@ -51,7 +50,7 @@ public class ArtistListViewAdapter extends ArrayAdapter<ArtistItem> {
 
         holder.txtTitle.setText(artistItem.getName());
 
-        if (artistItem.getImage_path() != null && !artistItem.getImage_path().toString().equals(""))
+        if (artistItem.getImage_path() != null && !artistItem.getImage_path().equals(""))
             Picasso.with(context).load(artistItem.getImage_path()).into(holder.imageView);
         else
             holder.imageView.setImageResource(R.mipmap.greyscale_thumb);

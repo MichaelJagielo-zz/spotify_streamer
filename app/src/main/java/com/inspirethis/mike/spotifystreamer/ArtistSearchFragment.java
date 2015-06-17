@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
@@ -24,7 +25,8 @@ import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 
 /**
- * A placeholder fragment containing a simple view.
+ * ArtistSearchFragment class, displays results of Artist query on Spotify API
+ * instantiates TopTenSearchFragment
  */
 public class ArtistSearchFragment extends Fragment implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
 
@@ -68,11 +70,12 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mMusicListAdapter = new ArtistListViewAdapter(getActivity(), R.layout.artist_item_list, artistItems);
+        mMusicListAdapter = new ArtistListViewAdapter(getActivity(), R.layout.artist_list_item, artistItems);
 
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
         searchView = (SearchView) rootView.findViewById(R.id.search);
+        searchView.setQueryHint(getResources().getString(R.string.search_artist_hint));
         searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity()
@@ -109,16 +112,14 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
 
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                //TODO: search artist top ten data here, artist name, spotifyID, artistThumbnailImage path
-
+                hideKeyboard();
                 String artist = mMusicListAdapter.getItem(position).getName();
-                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
-
+//                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
                 Bundle bundle = new Bundle();
                 bundle.putString("artist", artist);
-                Log.d("","artist: " + artist);
+                Log.d("", "artist: " + artist);
                 TopTenSearchFragment topTenSearchFragment = (TopTenSearchFragment) getFragmentManager().findFragmentById(R.id.displayTrackList);
-                if(topTenSearchFragment == null) {
+                if (topTenSearchFragment == null) {
                     final FragmentTransaction ft = getFragmentManager().beginTransaction();
                     topTenSearchFragment = new TopTenSearchFragment();
                     topTenSearchFragment.setArguments(bundle);
@@ -168,6 +169,15 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
                     artistItems.add(new ArtistItem(a.id, a.name, url));
                 }
             }
+        }
+    }
+
+    private void hideKeyboard() {
+        // Check if no view has focus:
+        View view = getActivity().getCurrentFocus();
+        if (view != null) {
+            InputMethodManager inputManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
 }

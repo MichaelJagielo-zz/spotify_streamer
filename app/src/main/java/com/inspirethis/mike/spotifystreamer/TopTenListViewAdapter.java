@@ -14,6 +14,7 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 /**
+ * TopTenListViewAdapter is custom ArrayAdapter for displaying the list of top ten results query
  * Created by mike on 6/15/15.
  */
 public class TopTenListViewAdapter extends ArrayAdapter<TrackItem> {
@@ -26,12 +27,10 @@ public class TopTenListViewAdapter extends ArrayAdapter<TrackItem> {
         this.context = context;
     }
 
-    /*private view holder class*/
     private class ViewHolder {
         ImageView imageView;
         TextView albumTitle;
         TextView trackTitle;
-
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -41,7 +40,7 @@ public class TopTenListViewAdapter extends ArrayAdapter<TrackItem> {
         LayoutInflater mInflater = (LayoutInflater) context
                 .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         if (convertView == null) {
-            convertView = mInflater.inflate(R.layout.topten_item_list, null);
+            convertView = mInflater.inflate(R.layout.topten_list_item, null);
             holder = new ViewHolder();
 
             holder.albumTitle = (TextView) convertView.findViewById(R.id.album);

@@ -4,9 +4,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
+ * TrackItem is list item object for displaying Artists in TopTenListViewAdapter
+ * implements Parcelable for retaining queried results on rotation.
  * Created by mike on 6/15/15.
  */
 public class TrackItem implements Parcelable {
+
     private String spotifyId;
     private String name;
     private String album;
@@ -22,6 +25,21 @@ public class TrackItem implements Parcelable {
         this.image_path_small = image_path_small;
         this.image_path_large = image_path_large;
     }
+
+    private TrackItem(Parcel in ) {
+        readFromParcel( in );
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+        public TrackItem createFromParcel(Parcel in) {
+            return new TrackItem(in);
+        }
+
+        public TrackItem[] newArray(int size) {
+            return new TrackItem[size];
+        }
+    };
 
     public String getSpotifyId() {
         return spotifyId;
@@ -65,11 +83,6 @@ public class TrackItem implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-//        dest.writeInt(map.size());
-//        for (String key : map.keySet()) {
-//            dest.writeString(key);
-//            dest.writeString(map.get(key));
-//        }
         dest.writeString(spotifyId);
         dest.writeString(name);
         dest.writeString(album);
@@ -79,12 +92,6 @@ public class TrackItem implements Parcelable {
     }
 
     private void readFromParcel(Parcel in ) {
-//        int size = in.readInt();
-//        for(int i = 0; i < size; i++) {
-//            String key = in.readString();
-//            String value = in.readString();
-//            map.put(key, value);
-//        }
         spotifyId = in.readString();
         name = in.readString();
         album = in.readString();
@@ -98,4 +105,6 @@ public class TrackItem implements Parcelable {
     public int describeContents() {
         return 0;
     }
+
+
 }

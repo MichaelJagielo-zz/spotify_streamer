@@ -1,6 +1,7 @@
 package com.inspirethis.mike.spotifystreamer;
 
 /**
+ * ArtistItem is list item object for displaying Artists in ArtistListViewAdapter
  * Created by mike on 6/12/15.
  */
 public class ArtistItem {

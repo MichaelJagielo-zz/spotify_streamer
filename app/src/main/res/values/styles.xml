@@ -1,8 +1,18 @@
 <resources>
 
-    <!--&lt;!&ndash; Base application theme. &ndash;&gt;-->
-    <!--<style name="AppTheme" parent="">-->
-        <!--&lt;!&ndash; Customize your theme here. &ndash;&gt;-->
-    <!--</style>-->
+    <style name="topTenListItemStyle">
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:scrollHorizontally">true</item>
+        <item name="android:textColor">@color/grey_text</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="artistListItemStyle">
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/grey_text</item>
+        <item name="android:textSize">15sp</item>
+    </style>
 
 </resources>

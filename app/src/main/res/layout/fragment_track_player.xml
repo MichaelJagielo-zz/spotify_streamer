@@ -2,7 +2,8 @@
     android:id="@+id/widget33"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:paddingTop="20sp">
+    android:layout_marginBottom="20dp"
+    android:layout_marginTop="10dp">
 
     <TextView
         android:id="@+id/tvArtistName"
@@ -11,64 +12,101 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:textSize="25sp"
         android:text="artist name"
-        android:textIsSelectable="false"/>
+        android:textIsSelectable="false"
+        android:textSize="17sp" />
 
     <TextView
         android:id="@+id/tvAlbumName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_below="@+id/tvArtistName"
+        android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:textIsSelectable="false"
         android:text="album name"
+        android:textIsSelectable="false"
         android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/tvTrackName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/trackImage"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="track name"
+        android:textIsSelectable="false"
+        android:textSize="17sp" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvTrackName"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:id="@+id/tvStartTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonPrevious"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/seekBar"
+        android:layout_marginLeft="15dp"
+        android:text="0.00" />
+
+    <TextView
+        android:id="@+id/tvFinalTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonNext"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/seekBar"
+        android:layout_marginRight="15dp"
+        android:text="0.00" />
 
 
     <ImageButton
         android:id="@+id/buttonPlay"
-        android:contentDescription="@string/play"
-        android:layout_width="wrap_content"
+        android:layout_width="50sp"
         android:layout_height="50sp"
-        android:layout_marginLeft="25dp"
-        android:layout_marginRight="25dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:src="@android:drawable/ic_media_play"/>
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        android:contentDescription="@string/play"
+        android:src="@android:drawable/ic_media_play" />
 
     <ImageButton
         android:id="@+id/buttonPrevious"
-        android:contentDescription="@string/prev"
-        android:layout_width="wrap_content"
+        android:layout_width="50sp"
         android:layout_height="50sp"
         android:layout_alignParentBottom="true"
         android:layout_toLeftOf="@+id/buttonPlay"
-        android:src="@android:drawable/ic_media_previous"/>
+        android:contentDescription="@string/prev"
+        android:src="@android:drawable/ic_media_previous" />
 
     <ImageButton
         android:id="@+id/buttonNext"
-        android:contentDescription="@string/next"
-        android:layout_width="wrap_content"
+        android:layout_width="50sp"
         android:layout_height="50sp"
         android:layout_alignParentBottom="true"
         android:layout_toRightOf="@+id/buttonPlay"
-        android:src="@android:drawable/ic_media_next"/>
+        android:contentDescription="@string/next"
+        android:src="@android:drawable/ic_media_next" />
 
     <ImageView
         android:id="@+id/trackImage"
-        android:contentDescription="@string/track_image"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/tvAlbumName"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="false"
-        android:layout_marginTop="25dp"
-        android:layout_marginBottom="150dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:src="@android:drawable/ic_media_play"
-        android:scaleType="center" />
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/track_image"
+        android:scaleType="fitCenter" />
 
 </RelativeLayout>

@@ -22,44 +22,57 @@ import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.TracksPager;
 
 /**
+ * TopTenListViewAdapter class, displays results of Top Ten query for given Artist on Spotify API
+ * Instantiates TrackPlayerFragment
  * Created by mike on 6/15/15.
  */
 public class TopTenSearchFragment extends Fragment {
 
     private TopTenListViewAdapter mToptenAdapter;
-    private ArrayList<TrackItem> trackItems;
+    private ArrayList<TrackItem> mTrackItems;
     private String mArtist;
 
     public TopTenSearchFragment() {}
 
     private void performSearch(String search) {
         FetchTracksTask task = new FetchTracksTask();
-        Log.d("", "performing search: " + search);
+        //Log.d("", "performing search: " + search);
         task.execute(search);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //if (savedInstanceState != null) {}
-
+        if(savedInstanceState == null || !savedInstanceState.containsKey("track items")) {
+            mTrackItems = new ArrayList<>();
+        }
+        else {
+            mTrackItems = savedInstanceState.getParcelableArrayList("track items");
+            //Log.d("onCreate: track", mTrackItems.get(0).getTrack());
+        }
         // Add this line in order for this fragment to handle menu events.
-        //setHasOptionsMenu(true);
-        trackItems = new ArrayList<>();
+        setHasOptionsMenu(true);
 
         Bundle bundle = getArguments();
         if(bundle != null) {
             mArtist = bundle.getString("artist");
-            Log.d("top 10: ", mArtist);
+            //Log.d("top 10: ", mArtist);
             performSearch(mArtist);
         }
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("track items", mTrackItems);
+        super.onSaveInstanceState(outState);
+    }
+
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mToptenAdapter = new TopTenListViewAdapter(getActivity(), R.layout.topten_item_list, trackItems);
+        mToptenAdapter = new TopTenListViewAdapter(getActivity(), R.layout.topten_list_item, mTrackItems);
 
         View rootView = inflater.inflate(R.layout.fragment_topten_search, container, false);
 
@@ -69,16 +82,8 @@ public class TopTenSearchFragment extends Fragment {
 
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                //TODO: save selected artist data here, artist name, album, track, artist image paths to play selection
 
-//                String artist = mToptenAdapter.getItem(position).getName();
-//                String album = mToptenAdapter.getItem(position).getAlbum();
-//                String track_image_path = mToptenAdapter.getItem(position).getImage_path_large();
-//                String trackName = mToptenAdapter.getItem(position).getTrack();
-
-                TrackItem trackItem = mToptenAdapter.getItem(position); // TODO: make trackItem parcelable and pass it in the bundle
-
-//                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
+                TrackItem trackItem = mToptenAdapter.getItem(position);
 
                 Bundle bundle = new Bundle();
                 bundle.putParcelable("track item", trackItem);
@@ -139,7 +144,7 @@ public class TopTenSearchFragment extends Fragment {
                         if (url_large_image.equals(""))
                             url_large_image = t.album.images.get(0).url;
 
-                        trackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
+                        mTrackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
                     }
                 }
             }

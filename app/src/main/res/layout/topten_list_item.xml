@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="5dp">
 
     <LinearLayout
@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_marginRight="5dp"
+        android:orientation="vertical"
         android:padding="3dp">
 
         <ImageView
@@ -18,19 +19,31 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_margin="7dp"
-            android:scaleType="centerCrop"/>
+            android:scaleType="centerCrop" />
 
     </LinearLayout>
 
-    <!-- Artist Name -->
-    <TextView
-        android:id="@+id/artist"
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/thumbnail"
-        android:textColor="@color/grey_text"
-        android:singleLine="true"
-        android:textSize="15sp" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/album"
+            style="@style/topTenListItemStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/track" />
+
+        <TextView
+            android:id="@+id/track"
+            style="@style/topTenListItemStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/album" />
+    </LinearLayout>
 
 </RelativeLayout>

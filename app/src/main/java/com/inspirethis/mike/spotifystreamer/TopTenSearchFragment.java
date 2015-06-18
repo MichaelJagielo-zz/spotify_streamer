@@ -16,10 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.TracksPager;
+import retrofit.RetrofitError;
 
 /**
  * TopTenListViewAdapter class, displays results of Top Ten query for given Artist on Spotify API
@@ -28,42 +30,42 @@ import kaaes.spotify.webapi.android.models.TracksPager;
  */
 public class TopTenSearchFragment extends Fragment {
 
+    private final String LOG_TAG = TopTenSearchFragment.class.getSimpleName();
+
     private TopTenListViewAdapter mToptenAdapter;
     private ArrayList<TrackItem> mTrackItems;
     private String mArtist;
 
-    public TopTenSearchFragment() {}
+    public TopTenSearchFragment() {
+    }
 
     private void performSearch(String search) {
         FetchTracksTask task = new FetchTracksTask();
-        //Log.d("", "performing search: " + search);
         task.execute(search);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState == null || !savedInstanceState.containsKey("track items")) {
+        if (savedInstanceState == null || !savedInstanceState.containsKey("track items")) {
             mTrackItems = new ArrayList<>();
-        }
-        else {
+        } else {
             mTrackItems = savedInstanceState.getParcelableArrayList("track items");
-            //Log.d("onCreate: track", mTrackItems.get(0).getTrack());
         }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
 
         Bundle bundle = getArguments();
-        if(bundle != null) {
+        if (bundle != null) {
             mArtist = bundle.getString("artist");
-            //Log.d("top 10: ", mArtist);
             performSearch(mArtist);
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList("track items", mTrackItems);
+        if (mTrackItems != null)
+            outState.putParcelableArrayList("track items", mTrackItems);
         super.onSaveInstanceState(outState);
     }
 
@@ -88,7 +90,7 @@ public class TopTenSearchFragment extends Fragment {
                 Bundle bundle = new Bundle();
                 bundle.putParcelable("track item", trackItem);
                 TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.playTrack);
-                if(trackPlayerFragment == null) {
+                if (trackPlayerFragment == null) {
                     final FragmentTransaction ft = getFragmentManager().beginTransaction();
                     trackPlayerFragment = new TrackPlayerFragment();
                     trackPlayerFragment.setArguments(bundle);
@@ -112,10 +114,21 @@ public class TopTenSearchFragment extends Fragment {
                 return null;
             }
 
-            SpotifyApi api = new SpotifyApi();
-            SpotifyService spotify = api.getService();
+            TracksPager tracksPager = null;
 
-            final TracksPager tracksPager = spotify.searchTracks(params[0]);
+            try {
+
+                SpotifyApi api = new SpotifyApi();
+                SpotifyService spotify = api.getService();
+                tracksPager = spotify.searchTracks(params[0]);
+
+            } catch (RetrofitError error) {
+
+                SpotifyError spotifyError = SpotifyError.fromRetrofitError(error);
+                Log.d(LOG_TAG, spotifyError.getMessage());
+                return null;
+            }
+
             return tracksPager.tracks.items;
         }
 

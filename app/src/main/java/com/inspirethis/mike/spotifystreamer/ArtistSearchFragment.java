@@ -20,15 +20,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import retrofit.RetrofitError;
 
 /**
  * ArtistSearchFragment class, displays results of Artist query on Spotify API
  * instantiates TopTenSearchFragment
  */
 public class ArtistSearchFragment extends Fragment implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
+
+    private final String LOG_TAG = ArtistSearchFragment.class.getSimpleName();
 
     private ArtistListViewAdapter mMusicListAdapter;
     private ArrayList<ArtistItem> artistItems;
@@ -114,7 +118,6 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 hideKeyboard();
                 String artist = mMusicListAdapter.getItem(position).getName();
-//                Toast.makeText(getActivity(), artist, Toast.LENGTH_SHORT).show();
                 Bundle bundle = new Bundle();
                 bundle.putString("artist", artist);
                 Log.d("", "artist: " + artist);
@@ -148,9 +151,22 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
                 return null;
             }
 
-            SpotifyApi api = new SpotifyApi();
-            SpotifyService spotify = api.getService();
-            ArtistsPager artistsPager = spotify.searchArtists(params[0]);
+            ArtistsPager artistsPager = null;
+
+            try {
+
+                SpotifyApi api = new SpotifyApi();
+                SpotifyService spotify = api.getService();
+                artistsPager = spotify.searchArtists(params[0]);
+
+            } catch (RetrofitError error) {
+
+                SpotifyError spotifyError = SpotifyError.fromRetrofitError(error);
+                Log.d(LOG_TAG, spotifyError.getMessage());
+
+                return null;
+            }
+
             return artistsPager.artists.items;
         }
 

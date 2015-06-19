@@ -2,6 +2,9 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,7 +33,7 @@ import retrofit.RetrofitError;
  */
 public class TopTenSearchFragment extends Fragment {
 
-    private final String LOG_TAG = TopTenSearchFragment.class.getSimpleName();
+    //private final String LOG_TAG = TopTenSearchFragment.class.getSimpleName();
 
     private TopTenListViewAdapter mToptenAdapter;
     private ArrayList<TrackItem> mTrackItems;
@@ -40,9 +43,13 @@ public class TopTenSearchFragment extends Fragment {
     }
 
     private void performSearch(String search) {
-        FetchTracksTask task = new FetchTracksTask();
-        task.execute(search);
+        if (isWifiConnected()) {
+            FetchTracksTask task = new FetchTracksTask();
+            task.execute(search);
+        } else
+            Toast.makeText(getActivity(), getResources().getString(R.string.network_connection_needed), Toast.LENGTH_SHORT).show();
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -137,7 +144,8 @@ public class TopTenSearchFragment extends Fragment {
             if (result != null) {
                 if (result.size() == 0)
                     Toast.makeText(getActivity(), getResources().getString(R.string.no_artists_found), Toast.LENGTH_SHORT).show();
-                mToptenAdapter.clear();
+                if (mToptenAdapter != null)
+                    mToptenAdapter.clear();
                 for (Track t : result) {
                     Log.d("", "track URI: " + t.uri);
 
@@ -162,5 +170,17 @@ public class TopTenSearchFragment extends Fragment {
                 }
             }
         }
+    }
+
+    private boolean isWifiConnected() {
+        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+    }
+
+    private boolean isCellularConnected() {
+        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
     }
 }

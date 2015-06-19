@@ -10,4 +10,5 @@
     <string name="track_image">track image</string>
     <string name="track_not_found">No track found</string>
     <string name="network_error">network error</string>
+    <string name="network_connection_needed">Network connection needed</string>
 </resources>

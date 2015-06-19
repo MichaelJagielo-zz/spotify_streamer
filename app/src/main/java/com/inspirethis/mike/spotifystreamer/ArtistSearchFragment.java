@@ -4,6 +4,8 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.SearchManager;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,7 +34,7 @@ import retrofit.RetrofitError;
  */
 public class ArtistSearchFragment extends Fragment implements SearchView.OnQueryTextListener, SearchView.OnCloseListener {
 
-    private final String LOG_TAG = ArtistSearchFragment.class.getSimpleName();
+    //private final String LOG_TAG = ArtistSearchFragment.class.getSimpleName();
 
     private ArtistListViewAdapter mMusicListAdapter;
     private ArrayList<ArtistItem> artistItems;
@@ -44,22 +46,22 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        Log.d("", "performing search: " + query);
         performSearch(query);
         return false;
     }
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        Log.d("", "text changing: " + newText);
         performSearch(newText);
         return false;
     }
 
     private void performSearch(String search) {
-        FetchArtistTask task = new FetchArtistTask();
-        Log.d("", "performing search: " + search);
-        task.execute(search);
+        if (isWifiConnected()) {
+            FetchArtistTask task = new FetchArtistTask();
+            task.execute(search);
+        } else
+            Toast.makeText(getActivity(), getResources().getString(R.string.network_connection_needed), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -88,14 +90,12 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.d("query", query);
                 performSearch(query);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                Log.d("onQueryTextChange: ", newText);
                 performSearch(newText);
                 return false;
             }
@@ -120,7 +120,6 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
                 String artist = mMusicListAdapter.getItem(position).getName();
                 Bundle bundle = new Bundle();
                 bundle.putString("artist", artist);
-                Log.d("", "artist: " + artist);
                 TopTenSearchFragment topTenSearchFragment = (TopTenSearchFragment) getFragmentManager().findFragmentById(R.id.displayTrackList);
                 if (topTenSearchFragment == null) {
                     final FragmentTransaction ft = getFragmentManager().beginTransaction();
@@ -177,8 +176,6 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
                     Toast.makeText(getActivity(), getResources().getString(R.string.no_artists_found), Toast.LENGTH_SHORT).show();
                 mMusicListAdapter.clear();
                 for (Artist a : result) {
-                    Log.d("", "image URI: " + a.uri);
-
                     String url = "";
                     if (a.images.size() > 0)
                         url = a.images.get(0).url;
@@ -195,5 +192,18 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
             InputMethodManager inputManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
+    }
+
+    private boolean isWifiConnected() {
+        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+    }
+
+    //TODO: note spotify only seems to work with wifi connection, or perhaps a connection fast enough, only checking if wifi connection for now
+    private boolean isCellularConnected() {
+        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
     }
 }

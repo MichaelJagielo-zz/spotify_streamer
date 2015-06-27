@@ -447,37 +447,26 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         String bufferValue = bufferIntent.getStringExtra("buffering");
         int bufferIntValue = Integer.parseInt(bufferValue);
 
-        // When the broadcasted "buffering" value is 1, show "Buffering"
-        // progress dialogue.
-        // When the broadcasted "buffering" value is 0, dismiss the progress
-        // dialogue.
-
-        Log.d("", "showProgressDialog: " + bufferValue);
         switch (bufferIntValue) {
 
             case 0:
-                // Log.v(TAG, "BufferIntValue=0 RemoveBufferDialogue");
-                // txtBuffer.setText("");
-                Log.d("", "*** case 0, dismiss dialog");
                 if (null != progressDialog) {
                     progressDialog.dismiss();
                 }
                 break;
 
             case 1:
-                progressDialog = new ProgressDialog(getActivity(), 1);
+                progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_DARK);
                 progressDialog.setTitle("loading track sample.."); // TODO: move String res to folder
                 progressDialog.show();
                 break;
 
-            // Listen for "2" to reset the button to a play button
             case 2:
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
                 break;
-
         }
     }
-    
+
 
     // Set up broadcast receiver
     private BroadcastReceiver broadcastBufferReceiver = new BroadcastReceiver() {
@@ -496,9 +485,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
         super.onPause();
     }
-
-
-
+    
 
     // register broadcast receiver
     @Override

@@ -51,11 +51,14 @@ public class MusicService extends Service implements OnCompletionListener,
     boolean bNewTrack;
 
     private final Handler mHandler = new Handler();
-    private static int songEnded;
+    private static int songEnded = 0;
     public static final String BROADCAST_ACTION = "com.inspirethis.mike.spotifystreamer.seekprogress";
 
     // Set up broadcast identifier and seekBarIntent
     public static final String BROADCAST_BUFFER = "com.inspirethis.mike.spotifystreamer.broadcastbuffer";
+
+    public static final String TRACK_RUNNING = "track_running";
+    public static final String TRACK_COMPLETED = "track_completed";
 
     Intent mBufferIntent;
     Intent mSeekIntent;
@@ -80,7 +83,7 @@ public class MusicService extends Service implements OnCompletionListener,
         // Register headset receiver
         registerReceiver(headsetReceiver, new IntentFilter(
                 Intent.ACTION_HEADSET_PLUG));
-
+        songEnded = 0;
     }
 
     @Override
@@ -175,15 +178,15 @@ public class MusicService extends Service implements OnCompletionListener,
 
     private Runnable sendUpdatesToUI = new Runnable() {
         public void run() {
-            LogMediaPosition();
+            logMediaPosition(TRACK_RUNNING);
             mHandler.postDelayed(this, 100);
         }
     };
 
-    private void LogMediaPosition() {
+    private void logMediaPosition(String state) {
 
-        Log.d(LOG_TAG, "method: LogMediaPosition");
-        if (mMediaPlayer.isPlaying()) {
+        Log.d(LOG_TAG, "method: logMediaPosition");
+        if (mMediaPlayer.isPlaying() && state.equals(TRACK_RUNNING)) {
             mMediaPosition = mMediaPlayer.getCurrentPosition();
 
             mMediaMax = mMediaPlayer.getDuration();
@@ -191,6 +194,15 @@ public class MusicService extends Service implements OnCompletionListener,
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaPosition));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
+            Log.d("", "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
+            sendBroadcast(mSeekIntent);
+        } else if (state.equals(TRACK_COMPLETED)) {
+            // report track completed to TrackPlayerFragment
+            songEnded = 1;
+            mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
+            mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaMax));
+            mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
+            Log.d("", "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         }
     }
@@ -303,13 +315,10 @@ public class MusicService extends Service implements OnCompletionListener,
 
     @Override
     public void onBufferingUpdate(MediaPlayer arg0, int arg1) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public boolean onInfo(MediaPlayer arg0, int arg1, int arg2) {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -351,6 +360,9 @@ public class MusicService extends Service implements OnCompletionListener,
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        Log.d("", "calling onCompletion: ");
+        songEnded = 1;
+        logMediaPosition(TRACK_COMPLETED);
         // when track ends, notify TrackPlayerFragment to display Play button
         stopMedia();
         // service method, calling stop
@@ -363,6 +375,7 @@ public class MusicService extends Service implements OnCompletionListener,
     }
 
     public void playMedia() {
+        songEnded = 0;
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.seekTo(mMediaPosition);
             mMediaPlayer.start();

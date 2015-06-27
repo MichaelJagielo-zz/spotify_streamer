@@ -87,7 +87,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     Intent mServiceIntent;
 
 
-    private boolean mBoolMusicPlaying;
+    private boolean bMusicPlaying;
     TelephonyManager telephonyManager;
     PhoneStateListener listener;
 
@@ -100,7 +100,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     // Progress dialogue and broadcast receiver variables
     boolean mBufferBroadcastIsRegistered;
-    private ProgressDialog pdBuff = null;
+    private ProgressDialog progressDialog = null;
 
 
     public TrackPlayerFragment() {
@@ -111,7 +111,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mBoolMusicPlaying = false;
+        bMusicPlaying = false;
 
         if (savedInstanceState == null || !savedInstanceState.containsKey("list")) {
             Bundle bundle = getArguments();
@@ -158,6 +158,10 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         int seekProgress = Integer.parseInt(currentDuration);
         int seekMax = Integer.parseInt(totalDuration);
         mTrackEndedFlag = Integer.parseInt(strSongEnded);
+        Log.d("", "updateUI  mTrackEndedFlag: " + mTrackEndedFlag);
+        Log.d("", "updateUI: mSeekBar.getMax(): " + mSeekBar.getMax());
+
+        Log.d("", "updateUI: mSeekBar.getProgress(): " + mSeekBar.getProgress());
 
         mSeekBar.setMax(seekMax);
         mSeekBar.setProgress(seekProgress);
@@ -177,16 +181,30 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @OnClick(R.id.buttonPlay)
     public void playPause() {
 
-        if (!mBoolMusicPlaying) {
+        Log.d("", "playPause: mTrackEndedFlag: " + mTrackEndedFlag);
+
+        Log.d("", "playPause: mSeekBar.getMax(): " + mSeekBar.getMax());
+
+        Log.d("", "playPause: mSeekBar.getProgress(): " + mSeekBar.getProgress());
+
+        if (!bMusicPlaying) {
+            // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-            // pausing an existing track play
-            if (mSeekBar.getProgress() > 0)
+
+            // resuming an existing track play
+            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1)
                 playTrack(mTrack.preview_url, mSeekBar.getProgress(), false);
+
+                // start new track
             else
                 playTrack(mTrack.preview_url, 0, true);
-            mBoolMusicPlaying = true;
-        } else {
-            mBoolMusicPlaying = false;
+
+            // replaying an existing track that has ended
+        } else if (mTrackEndedFlag == 1)
+            playTrack(mTrack.preview_url, 0, false);
+
+        else {
+            // track is playing, pausing track
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             stopMusicService();
         }
@@ -291,10 +309,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
         } catch (Exception e) {
             e.printStackTrace();
-            // TODO: replace this with log
-            Toast.makeText(getActivity().getApplicationContext(),
-                    e.getClass().getName() + " " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
         }
 
         return rootView;
@@ -332,7 +346,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
                 // instantiate MusicService upon fetch of Track
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-                mBoolMusicPlaying = true;
+                bMusicPlaying = true;
                 playTrack(mTrack.preview_url, 0, true);
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
@@ -384,15 +398,14 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     private void stopMusicService() {
         // unregister broadcastReceiver for seekBar
-        mBoolMusicPlaying = false;
+        bMusicPlaying = false;
         if (mBroadcastIsRegistered) {
             try {
                 getActivity().unregisterReceiver(broadcastReceiver);
                 mBroadcastIsRegistered = false;
             } catch (Exception e) {
-                 Log.d("", "Error in Activity", e); // TODO update log statement
+                Log.d("", "Error in Activity, exception on unregisterReceiver", e); // TODO update log statement
                 e.printStackTrace();
-                //Toast.makeText(getActivity().getApplicationContext(), "Error stopping MusicService", Toast.LENGTH_LONG).show();
             }
         }
 
@@ -404,40 +417,17 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
     }
 
-    // start MusicService
-    private void playTrack(String url) {
-        if (isConnected()) {
-            mServiceIntent.putExtra("sentAudioLink", url);
-
-            try {
-                getActivity().startService(mServiceIntent);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // register receiver for seekBar
-            getActivity().registerReceiver(broadcastReceiver, new IntentFilter(
-                    MusicService.BROADCAST_ACTION));
-
-            mBroadcastIsRegistered = true;
-
-        } else {
-            Toast.makeText(getActivity().getApplicationContext(),
-                    getResources().getString(R.string.network_connection_needed),
-                    Toast.LENGTH_LONG).show();
-        }
-    }
 
     private void playTrack(String url, int position, boolean newTrack) {
-
+        mTrackEndedFlag = 0;
         if (isConnected()) {
-
             mServiceIntent.putExtra("sentAudioLink", url);
             mServiceIntent.putExtra("pausePosition", position);
             mServiceIntent.putExtra("newTrack", newTrack);
 
             try {
                 getActivity().startService(mServiceIntent);
+                bMusicPlaying = true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -452,8 +442,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
     }
 
-    // progress dialogue for buffering...
-    private void showPD(Intent bufferIntent) {
+    // progress dialogue for buffering
+    private void showProgressDialog(Intent bufferIntent) {
         String bufferValue = bufferIntent.getStringExtra("buffering");
         int bufferIntValue = Integer.parseInt(bufferValue);
 
@@ -462,17 +452,22 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         // When the broadcasted "buffering" value is 0, dismiss the progress
         // dialogue.
 
+        Log.d("", "showProgressDialog: " + bufferValue);
         switch (bufferIntValue) {
+
             case 0:
                 // Log.v(TAG, "BufferIntValue=0 RemoveBufferDialogue");
                 // txtBuffer.setText("");
-                if (pdBuff != null) {
-                    pdBuff.dismiss();
+                Log.d("", "*** case 0, dismiss dialog");
+                if (null != progressDialog) {
+                    progressDialog.dismiss();
                 }
                 break;
 
             case 1:
-                //BufferDialogue(); //TODO call to buffer dialog here
+                progressDialog = new ProgressDialog(getActivity(), 1);
+                progressDialog.setTitle("loading track sample.."); // TODO: move String res to folder
+                progressDialog.show();
                 break;
 
             // Listen for "2" to reset the button to a play button
@@ -482,19 +477,13 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
         }
     }
-
-    // Progress dialogue...
-//    private void BufferDialogue() {
-//
-//        pdBuff = ProgressDialog.show(getActivity().getApplicationContext(), "Buffering...",
-//                "Acquiring song...", true);
-//    }
+    
 
     // Set up broadcast receiver
     private BroadcastReceiver broadcastBufferReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent bufferIntent) {
-            showPD(bufferIntent);
+            showProgressDialog(bufferIntent);
         }
     };
 
@@ -507,6 +496,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
         super.onPause();
     }
+
+
 
 
     // register broadcast receiver
@@ -524,7 +515,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     // when user manually moves seekBar, broadcast new position to service
     @Override
     public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
-        // TODO Auto-generated method stub
         if (fromUser) {
             int seekPos = sb.getProgress();
             seekBarIntent.putExtra("seekpos", seekPos);
@@ -535,12 +525,10 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     // alternatives to track seekBar if moved.
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        // TODO Auto-generated method stub
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        // TODO Auto-generated method stub
     }
 
     private boolean isConnected() {

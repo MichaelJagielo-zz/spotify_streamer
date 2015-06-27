@@ -43,7 +43,7 @@ public class TopTenSearchFragment extends Fragment {
     }
 
     private void performSearch(String search) {
-        if (isWifiConnected()) {
+        if (isConnected()) {
             FetchTracksTask task = new FetchTracksTask();
             task.execute(search);
         } else
@@ -95,7 +95,9 @@ public class TopTenSearchFragment extends Fragment {
                 TrackItem trackItem = mToptenAdapter.getItem(position);
 
                 Bundle bundle = new Bundle();
-                bundle.putParcelable("track item", trackItem);
+                bundle.putInt("index", position);
+                bundle.putParcelableArrayList("tracks_list", mTrackItems);
+                //bundle.putParcelable("track item", trackItem);
                 TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.playTrack);
                 if (trackPlayerFragment == null) {
                     final FragmentTransaction ft = getFragmentManager().beginTransaction();
@@ -170,6 +172,10 @@ public class TopTenSearchFragment extends Fragment {
                 }
             }
         }
+    }
+
+    private boolean isConnected() {
+        return isWifiConnected() || isCellularConnected();
     }
 
     private boolean isWifiConnected() {

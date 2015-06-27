@@ -48,7 +48,7 @@
         android:layout_marginTop="10dp" />
 
     <TextView
-        android:id="@+id/tvStartTime"
+        android:id="@+id/tvCurrentTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/buttonPrevious"
@@ -76,8 +76,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="25dp"
         android:layout_marginRight="25dp"
-        android:contentDescription="@string/play"
-        android:src="@android:drawable/ic_media_play" />
+        android:contentDescription="@string/play" />
 
     <ImageButton
         android:id="@+id/buttonPrevious"
@@ -85,8 +84,7 @@
         android:layout_height="50sp"
         android:layout_alignParentBottom="true"
         android:layout_toStartOf="@+id/buttonPlay"
-        android:contentDescription="@string/prev"
-        android:src="@android:drawable/ic_media_previous" />
+        android:contentDescription="@string/prev" />
 
     <ImageButton
         android:id="@+id/buttonNext"
@@ -94,8 +92,7 @@
         android:layout_height="50sp"
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/buttonPlay"
-        android:contentDescription="@string/next"
-        android:src="@android:drawable/ic_media_next" />
+        android:contentDescription="@string/next" />
 
     <ImageView
         android:id="@+id/trackImage"

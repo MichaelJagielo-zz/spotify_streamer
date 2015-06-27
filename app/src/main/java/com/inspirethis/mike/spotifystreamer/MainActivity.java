@@ -3,15 +3,17 @@ package com.inspirethis.mike.spotifystreamer;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.support.v4.app.NavUtils;
 
 /*
 * Main Activity for Spotify Streamer App
 * Instantiates ArtistSearchFragment
 */
 public class MainActivity extends Activity {
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

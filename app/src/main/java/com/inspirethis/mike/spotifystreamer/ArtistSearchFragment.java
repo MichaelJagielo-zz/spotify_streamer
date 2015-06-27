@@ -57,7 +57,7 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
     }
 
     private void performSearch(String search) {
-        if (isWifiConnected()) {
+        if (isConnected()) {
             FetchArtistTask task = new FetchArtistTask();
             task.execute(search);
         } else
@@ -194,13 +194,16 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
         }
     }
 
+    private boolean isConnected() {
+        return isWifiConnected() || isCellularConnected();
+    }
+
     private boolean isWifiConnected() {
         ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
     }
 
-    //TODO: note spotify only seems to work with wifi connection, or perhaps a connection fast enough, only checking if wifi connection for now
     private boolean isCellularConnected() {
         ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();

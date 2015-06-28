@@ -188,13 +188,12 @@ public class MusicService extends Service implements OnCompletionListener,
         Log.d(LOG_TAG, "method: logMediaPosition");
         if (mMediaPlayer.isPlaying() && state.equals(TRACK_RUNNING)) {
             mMediaPosition = mMediaPlayer.getCurrentPosition();
-
             mMediaMax = mMediaPlayer.getDuration();
 
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaPosition));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
-            Log.d("", "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
+            Log.d(LOG_TAG, "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         } else if (state.equals(TRACK_COMPLETED)) {
             // report track completed to TrackPlayerFragment
@@ -202,7 +201,7 @@ public class MusicService extends Service implements OnCompletionListener,
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
-            Log.d("", "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
+            Log.d(LOG_TAG, "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         }
     }
@@ -362,8 +361,8 @@ public class MusicService extends Service implements OnCompletionListener,
     public void onCompletion(MediaPlayer mp) {
         Log.d("", "calling onCompletion: ");
         songEnded = 1;
-        logMediaPosition(TRACK_COMPLETED);
         // when track ends, notify TrackPlayerFragment to display Play button
+        logMediaPosition(TRACK_COMPLETED);
         stopMedia();
         // service method, calling stop
         stopSelf();
@@ -405,10 +404,10 @@ public class MusicService extends Service implements OnCompletionListener,
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(notificationService);
 
         int icon = R.mipmap.greyscale_thumb;
-        CharSequence tickerText = "Spotify Streamer, enjoy some preview tracks!";
+        CharSequence tickerText = getResources().getString(R.string.ticket_text);
         Context context = getApplicationContext();
-        CharSequence contentTitle = "Spotify Streamer"; //TODO: move these strings to folder
-        CharSequence contentText = "sample notification add pause / play functionality";
+        CharSequence contentTitle = getResources().getString(R.string.streamer);
+        CharSequence contentText = getResources().getString(R.string.content_text);
 
         Intent notificationIntent = new Intent(this, TrackPlayerFragment.class);
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0,

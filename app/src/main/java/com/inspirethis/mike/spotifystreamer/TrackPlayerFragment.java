@@ -14,6 +14,8 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,11 +49,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private TrackItem mTrackItem;
     private TrackItem mCurrentTrackItem;
     private Track mTrack;
-
     private int mCurrentIndex;
     private ArrayList<TrackItem> mTrackItems;
-
-    //private MediaPlayer mPlayer;
 
     @InjectView(R.id.tvArtistName)
     TextView artist_name;
@@ -83,9 +82,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @InjectView(R.id.tvFinalTime)
     TextView tvFinalTime;
 
-
     Intent mServiceIntent;
-
 
     private boolean bMusicPlaying;
     TelephonyManager telephonyManager;
@@ -102,10 +99,10 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     boolean mBufferBroadcastIsRegistered;
     private ProgressDialog progressDialog = null;
 
+    private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
     public TrackPlayerFragment() {
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -135,6 +132,26 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+        menu.add(getResources().getString(R.string.menu_item_1));
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case 0:
+                stopMusicService();
+                System.exit(0);
+                getActivity().finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     // Broadcast Receiver to update position of seekBar from service
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -154,7 +171,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         // Displaying time completed playing
         tvCurrentTime.setText(milliSecondsToTimer(Integer.parseInt(currentDuration)));
 
-
         int seekProgress = Integer.parseInt(currentDuration);
         int seekMax = Integer.parseInt(totalDuration);
         mTrackEndedFlag = Integer.parseInt(strSongEnded);
@@ -172,20 +188,15 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
-    }
-
+//
+//    @Override
+//    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+//        menu.add(Menu.NONE, R.id.menu_action1, Menu.NONE, R.string.menu_action1);
+//        super.onCreateOptionsMenu(menu, inflater);
+//    }
 
     @OnClick(R.id.buttonPlay)
     public void playPause() {
-
-        Log.d("", "playPause: mTrackEndedFlag: " + mTrackEndedFlag);
-
-        Log.d("", "playPause: mSeekBar.getMax(): " + mSeekBar.getMax());
-
-        Log.d("", "playPause: mSeekBar.getProgress(): " + mSeekBar.getProgress());
 
         if (!bMusicPlaying) {
             // track is not playing, get ready to play
@@ -267,8 +278,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     private void resetTrackData() {
         mSeekBar.setProgress(0);
-        tvCurrentTime.setText("0.00"); //TODO: add this string to file
-        tvFinalTime.setText("00.30"); //TODO: get duration from intent rather than hard code
+        tvCurrentTime.setText("");
+        tvFinalTime.setText("");
 
         artist_name.setText(mCurrentTrackItem.getName());
         album_name.setText(mCurrentTrackItem.getAlbum());
@@ -286,11 +297,11 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         View rootView = inflater.inflate(R.layout.fragment_track_player, null);
         ButterKnife.inject(this, rootView);
 
+        setHasOptionsMenu(true);
+
         artist_name.setText(mCurrentTrackItem.getName());
         album_name.setText(mCurrentTrackItem.getAlbum());
         track_name.setText(mCurrentTrackItem.getTrack());
-
-        tvFinalTime.setText("00.30"); //TODO: same as above
 
         btnNext.setBackgroundResource(android.R.drawable.ic_media_next);
         btnPrevious.setBackgroundResource(android.R.drawable.ic_media_previous);
@@ -350,8 +361,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 playTrack(mTrack.preview_url, 0, true);
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
-                //TODO: create track not available layout?
-
             }
         }
     }
@@ -404,7 +413,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 getActivity().unregisterReceiver(broadcastReceiver);
                 mBroadcastIsRegistered = false;
             } catch (Exception e) {
-                Log.d("", "Error in Activity, exception on unregisterReceiver", e); // TODO update log statement
+                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
                 e.printStackTrace();
             }
         }
@@ -457,7 +466,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
             case 1:
                 progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_DARK);
-                progressDialog.setTitle("loading track sample.."); // TODO: move String res to folder
+                progressDialog.setTitle(getResources().getString(R.string.loading_media));
                 progressDialog.show();
                 break;
 
@@ -485,7 +494,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
         super.onPause();
     }
-    
+
 
     // register broadcast receiver
     @Override

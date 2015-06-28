@@ -12,4 +12,10 @@
     <string name="network_error">network error</string>
     <string name="network_connection_needed">Network connection needed</string>
     <string name="service_name">Music Service</string>
+    <string name="broadcast_register_error">Error in TrackPlayerFragment, exception on unregisterReceiver</string>
+    <string name="loading_media">loading track sample..</string>
+    <string name="streamer">Spotify Streamer</string>
+    <string name="ticket_text">Sample Ticker Text</string>
+    <string name="content_text">content text</string>
+    <string name="menu_item_1">Quit</string>
 </resources>

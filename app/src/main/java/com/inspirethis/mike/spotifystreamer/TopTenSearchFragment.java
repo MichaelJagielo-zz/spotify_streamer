@@ -69,6 +69,7 @@ public class TopTenSearchFragment extends Fragment {
         }
     }
 
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (mTrackItems != null)

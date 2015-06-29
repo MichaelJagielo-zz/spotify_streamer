@@ -1,14 +1,15 @@
 package com.inspirethis.mike.spotifystreamer;
 
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.telephony.PhoneStateListener;
@@ -23,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,13 +40,16 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Track;
 import retrofit.RetrofitError;
 
-/**
- * TrackPlayerFragment class, displays given track which is currently playing
- * injecting views with ButterKnife
- * Created by mike on 6/16/15.
- */
-public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeListener {
 
+/**
+ * A simple {@link Fragment} subclass.
+ * Activities that contain this fragment must implement the
+ * {@link TrackPlayerDialogFragment.OnFragmentInteractionListener} interface
+ * to handle interaction events.
+ * Use the {@link TrackPlayerDialogFragment#newInstance} factory method to
+ * create an instance of this fragment.
+ */
+public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar.OnSeekBarChangeListener {
     private TrackItem mTrackItem;
     private TrackItem mCurrentTrackItem;
     private Track mTrack;
@@ -103,16 +106,36 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     private int mCurrentPosition;
 
-    private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
+    private final String LOG_TAG = TrackPlayerDialogFragment.class.getSimpleName();
 
-    public TrackPlayerFragment() {
+
+    //private OnFragmentInteractionListener mListener;
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param param1 Parameter 1.
+     * @param param2 Parameter 2.
+     * @return A new instance of fragment TrackPlayerDialogFragment.
+     */
+    // TODO: Remove.
+    public static TrackPlayerDialogFragment newInstance(String param1, String param2) {
+        TrackPlayerDialogFragment fragment = new TrackPlayerDialogFragment();
+        Bundle args = new Bundle();
+//        args.putString(ARG_PARAM1, param1);
+//        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public TrackPlayerDialogFragment() {
+        // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         if (savedInstanceState == null || !savedInstanceState.containsKey("list")) {
             Bundle bundle = getArguments();
             if (bundle != null) {
@@ -149,6 +172,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     }
 
+
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
@@ -167,12 +192,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        setRetainInstance(true); //TODO:
     }
 
     // Broadcast Receiver to update position of seekBar from service
@@ -209,14 +228,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
         }
     }
-
-
-//
-//    @Override
-//    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//        menu.add(Menu.NONE, R.id.menu_action1, Menu.NONE, R.string.menu_action1);
-//        super.onCreateOptionsMenu(menu, inflater);
-//    }
 
     @OnClick(R.id.buttonPlay)
     public void playPause() {
@@ -316,11 +327,20 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         else
             track_image.setImageResource(R.mipmap.greyscale_thumb);
     }
+//    @Override
+//    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+//                             Bundle savedInstanceState) {
+//        // Inflate the layout for this fragment
+//        return inflater.inflate(R.layout.fragment_track_player_dialog, container, false);
+//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_track_player, null); //TODO: on phones, display single layout.. pass boolean isTwoPane, then handle here
+//TODO: get parent view reset on each call inflate trackplayer
+
+        View rootView = inflater.inflate(R.layout.fragment_track_player_overlay, null);
+        //rootView.setBackground(new ColorDrawable(Color.TRANSPARENT));
         ButterKnife.inject(this, rootView);
 
         setHasOptionsMenu(true);
@@ -569,4 +589,41 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
     }
+
+
+
+
+// TODO: remove listener interface if not needed
+//    @Override
+//    public void onAttach(Activity activity) {
+//        super.onAttach(activity);
+//        try {
+//            mListener = (OnFragmentInteractionListener) activity;
+//        } catch (ClassCastException e) {
+//            throw new ClassCastException(activity.toString()
+//                    + " must implement OnFragmentInteractionListener");
+//        }
+//    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        //mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        public void onFragmentInteraction(Uri uri);
+    }
+
 }

@@ -38,6 +38,7 @@ public class TopTenSearchFragment extends Fragment {
     private TopTenListViewAdapter mToptenAdapter;
     private ArrayList<TrackItem> mTrackItems;
     private String mArtist;
+    private boolean mTwoPane;
 
     public TopTenSearchFragment() {
     }
@@ -99,16 +100,48 @@ public class TopTenSearchFragment extends Fragment {
                 bundle.putInt("index", position);
                 bundle.putParcelableArrayList("tracks_list", mTrackItems);
                 //bundle.putParcelable("track item", trackItem);
-                TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.playTrack);
-                if (trackPlayerFragment == null) {
-                    final FragmentTransaction ft = getFragmentManager().beginTransaction();
-                    trackPlayerFragment = new TrackPlayerFragment();
-                    trackPlayerFragment.setArguments(bundle);
-                    ft.replace(R.id.displayArtistList, trackPlayerFragment, "trackPlayerFragment");
-                    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                    ft.addToBackStack(null);
-                    ft.commit();
+
+
+
+                if (getActivity().findViewById(R.id.track_player_container) != null) {
+                    mTwoPane = true;
+//                    TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
+//                    if (trackPlayerFragment == null) {
+//                        final FragmentTransaction ft = getFragmentManager().beginTransaction();
+//                        trackPlayerFragment = new TrackPlayerFragment();
+//                        trackPlayerFragment.setArguments(bundle);
+//                        ft.add(R.id.top_ten_container, trackPlayerFragment, "trackPlayerFragmentOverlay");
+//                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+//                        ft.addToBackStack(null);
+//                        ft.commit();
+
+                    // adding DialogFragment for view overlay on two pane view
+                    TrackPlayerDialogFragment trackPlayerFragment = (TrackPlayerDialogFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
+                    if (trackPlayerFragment == null) {
+                        final FragmentTransaction ft = getFragmentManager().beginTransaction();
+                        trackPlayerFragment = new TrackPlayerDialogFragment();
+                        trackPlayerFragment.setArguments(bundle);
+                        ft.add(R.id.two_pane_layout, trackPlayerFragment, "trackPlayerFragmentOverlay");
+                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                        ft.addToBackStack("trackPlayerFragmentOverlay");
+                        ft.commit();
+                    }
+                } else {
+                    mTwoPane = false;
+
+                    TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
+                    if (trackPlayerFragment == null) {
+                        final FragmentTransaction ft = getFragmentManager().beginTransaction();
+                        trackPlayerFragment = new TrackPlayerFragment();
+                        trackPlayerFragment.setArguments(bundle);
+                        ft.replace(R.id.top_ten_container, trackPlayerFragment, "trackPlayerFragment");
+                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                        ft.addToBackStack("trackPlayerFragment");
+                        ft.commit();
+                    }
+
                 }
+
             }
         });
         return rootView;

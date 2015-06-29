@@ -1,7 +1,6 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.SearchManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -40,6 +39,11 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
     private ArrayList<ArtistItem> artistItems;
     SearchView searchView;
     SearchManager searchManager;
+
+
+    public interface Callback {
+        public void onItemSelected(String date);
+    }
 
     public ArtistSearchFragment() {
     }
@@ -120,16 +124,10 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
                 String artist = mMusicListAdapter.getItem(position).getName();
                 Bundle bundle = new Bundle();
                 bundle.putString("artist", artist);
-                TopTenSearchFragment topTenSearchFragment = (TopTenSearchFragment) getFragmentManager().findFragmentById(R.id.displayTrackList);
-                if (topTenSearchFragment == null) {
-                    final FragmentTransaction ft = getFragmentManager().beginTransaction();
-                    topTenSearchFragment = new TopTenSearchFragment();
-                    topTenSearchFragment.setArguments(bundle);
-                    ft.replace(R.id.displayArtistList, topTenSearchFragment, "TopTenSearchFragment");
-                    ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                    ft.addToBackStack(null);
-                    ft.commit();
-                }
+
+                ((Callback)getActivity())
+                        .onItemSelected(artist);
+
             }
         });
         return rootView;

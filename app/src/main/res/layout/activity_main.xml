@@ -1,25 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:baselineAligned="false"
-    android:orientation="vertical">
-
-    <!-- Container views for Fragments -->
-
-    <FrameLayout
-        android:id="@+id/displayArtistList"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <FrameLayout
-        android:id="@+id/displayTrackList"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <FrameLayout
-        android:id="@+id/playTrack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-</LinearLayout>
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/track_player_detail_container"
+    android:name="com.inspirethis.mike.spotifystreamer.ArtistSearchFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.inspirethis.mike.spotifystreamer.ArtistSearchFragment"
+    tools:layout="@android:layout/list_content" />

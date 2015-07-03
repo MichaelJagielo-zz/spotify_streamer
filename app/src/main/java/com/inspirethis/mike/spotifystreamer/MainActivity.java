@@ -51,6 +51,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
 
             getFragmentManager().beginTransaction()
                     .replace(R.id.top_ten_container, fragment)
+                    .disallowAddToBackStack()
                     .commit();
         } else {
             Intent intent = new Intent(this, TopTenSearchActivity.class)

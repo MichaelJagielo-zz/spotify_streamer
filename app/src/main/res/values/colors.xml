@@ -16,6 +16,7 @@
     <color name="button_capstone">#ff3414</color>
     <color name="white">#fef6ff</color>
     <color name="semi_transparent">#73000000</color>
+    <color name="transparent">#00000000</color>
     <color name="grey_text">#a29da3</color>
 
 </resources>

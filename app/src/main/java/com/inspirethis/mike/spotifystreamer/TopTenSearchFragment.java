@@ -116,9 +116,9 @@ public class TopTenSearchFragment extends Fragment {
                         final FragmentTransaction ft = getFragmentManager().beginTransaction();
                         trackPlayerFragment = new TrackPlayerDialogFragment();
                         trackPlayerFragment.setArguments(bundle);
-                        ft.add(R.id.two_pane_layout, trackPlayerFragment, "trackPlayerFragmentOverlay");
+                        ft.replace(R.id.two_pane_layout, trackPlayerFragment, "trackPlayerFragmentOverlay");
                         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                        ft.addToBackStack("trackPlayerFragmentOverlay");
+                        ft.disallowAddToBackStack();
                         ft.commit();
                     }
                 } else {

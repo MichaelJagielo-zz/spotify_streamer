@@ -2,8 +2,8 @@
     android:id="@+id/widget33"
     android:layout_width="wrap_content"
     android:layout_height="fill_parent"
-    android:layout_marginBottom="20dp"
-    android:layout_marginTop="10dp">
+    android:layout_marginBottom="1dp"
+    android:layout_marginTop="1dp">
 
     <TextView
         android:id="@+id/tvArtistName"
@@ -45,7 +45,7 @@
         android:layout_below="@+id/tvTrackName"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="1dp" />
 
     <TextView
         android:id="@+id/tvCurrentTime"
@@ -70,26 +70,26 @@
 
     <ImageButton
         android:id="@+id/buttonPlay"
-        android:layout_width="50sp"
-        android:layout_height="50sp"
+        android:layout_width="35sp"
+        android:layout_height="35sp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginLeft="25dp"
-        android:layout_marginRight="25dp"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"
         android:contentDescription="@string/play" />
 
     <ImageButton
         android:id="@+id/buttonPrevious"
-        android:layout_width="50sp"
-        android:layout_height="50sp"
+        android:layout_width="35sp"
+        android:layout_height="35sp"
         android:layout_alignParentBottom="true"
         android:layout_toStartOf="@+id/buttonPlay"
         android:contentDescription="@string/prev" />
 
     <ImageButton
         android:id="@+id/buttonNext"
-        android:layout_width="50sp"
-        android:layout_height="50sp"
+        android:layout_width="35sp"
+        android:layout_height="35sp"
         android:layout_alignParentBottom="true"
         android:layout_toEndOf="@+id/buttonPlay"
         android:contentDescription="@string/next" />
@@ -97,7 +97,7 @@
     <ImageView
         android:id="@+id/trackImage"
         android:layout_width="fill_parent"
-        android:layout_height="100dp"
+        android:layout_height="75dp"
         android:layout_below="@id/tvAlbumName"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="20dp"

@@ -3,7 +3,7 @@
     android:id="@+id/top_ten_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.android.sunshine.app.DetailActivity"
+    tools:context="com.inspirethis.mike.spotifystreamer.TopTenSearchActivity"
     tools:ignore="MergeRootFrame">
 
     <ListView

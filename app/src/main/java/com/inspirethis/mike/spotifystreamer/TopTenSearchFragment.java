@@ -3,6 +3,7 @@ package com.inspirethis.mike.spotifystreamer;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -37,6 +38,7 @@ public class TopTenSearchFragment extends Fragment {
 
     private TopTenListViewAdapter mToptenAdapter;
     private ArrayList<TrackItem> mTrackItems;
+    private int mCurrentIndex;
     private String mArtist;
     private boolean mTwoPane;
 
@@ -66,15 +68,19 @@ public class TopTenSearchFragment extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             mArtist = bundle.getString("artist");
-            performSearch(mArtist);
+            if (mTrackItems.size() == 0)
+                performSearch(mArtist);
         }
     }
 
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (mTrackItems != null)
+        if (mTrackItems != null) {
             outState.putParcelableArrayList("track items", mTrackItems);
+            outState.putInt("index", mCurrentIndex);
+        }
+
         super.onSaveInstanceState(outState);
     }
 
@@ -94,27 +100,16 @@ public class TopTenSearchFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
-                TrackItem trackItem = mToptenAdapter.getItem(position);
+                mCurrentIndex = position;
+                TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);
 
                 Bundle bundle = new Bundle();
-                bundle.putInt("index", position);
+                bundle.putInt("index", mCurrentIndex); //// TODO: 7/2/15 create static TAG for keys. store these in Constants class
                 bundle.putParcelableArrayList("tracks_list", mTrackItems);
-                //bundle.putParcelable("track item", trackItem);
-
 
 
                 if (getActivity().findViewById(R.id.track_player_container) != null) {
                     mTwoPane = true;
-//                    TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
-//                    if (trackPlayerFragment == null) {
-//                        final FragmentTransaction ft = getFragmentManager().beginTransaction();
-//                        trackPlayerFragment = new TrackPlayerFragment();
-//                        trackPlayerFragment.setArguments(bundle);
-//                        ft.add(R.id.top_ten_container, trackPlayerFragment, "trackPlayerFragmentOverlay");
-//                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-//                        ft.addToBackStack(null);
-//                        ft.commit();
-
                     // adding DialogFragment for view overlay on two pane view
                     TrackPlayerDialogFragment trackPlayerFragment = (TrackPlayerDialogFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
                     if (trackPlayerFragment == null) {
@@ -129,19 +124,9 @@ public class TopTenSearchFragment extends Fragment {
                 } else {
                     mTwoPane = false;
 
-                    TrackPlayerFragment trackPlayerFragment = (TrackPlayerFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
-                    if (trackPlayerFragment == null) {
-                        final FragmentTransaction ft = getFragmentManager().beginTransaction();
-                        trackPlayerFragment = new TrackPlayerFragment();
-                        trackPlayerFragment.setArguments(bundle);
-                        ft.replace(R.id.top_ten_container, trackPlayerFragment, "trackPlayerFragment");
-                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                        ft.addToBackStack("trackPlayerFragment");
-                        ft.commit();
-                    }
-
+                    Intent trackPlayer = new Intent(getActivity(), TrackPlayerActivity.class).putExtras(bundle);
+                    startActivity(trackPlayer);
                 }
-
             }
         });
         return rootView;
@@ -160,7 +145,6 @@ public class TopTenSearchFragment extends Fragment {
             TracksPager tracksPager = null;
 
             try {
-
                 SpotifyApi api = new SpotifyApi();
                 SpotifyService spotify = api.getService();
                 tracksPager = spotify.searchTracks(params[0]);

@@ -17,10 +17,13 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.inspirethis.mike.spotifystreamer.Util.Constants;
 
 import java.io.IOException;
 
@@ -42,13 +45,16 @@ public class MusicService extends Service implements OnCompletionListener,
     private boolean bIsPausedInCall = false;
     private PhoneStateListener mPhoneStateListener;
     private TelephonyManager mTelephonyManager;
+    public static boolean SERVICE_RUNNING;
+    public static boolean TRACK_PLAYING;
 
     // seekBar variables
     int mMediaPosition;
     int mMediaMax;
-    String mSeekPositionString;
-    int mSeekPositionInt;
-    boolean bNewTrack;
+
+    private boolean mBroadcastReceiverRegistered;
+    private boolean mHeadsetReceiverRegistered;
+
 
     private final Handler mHandler = new Handler();
     private static int songEnded = 0;
@@ -68,6 +74,8 @@ public class MusicService extends Service implements OnCompletionListener,
     @Override
     public void onCreate() {
         Log.d(LOG_TAG, "Creating MusicService");
+        mBroadcastReceiverRegistered = false;
+        mHeadsetReceiverRegistered = false;
 
         mBufferIntent = new Intent(BROADCAST_BUFFER);
 
@@ -83,15 +91,131 @@ public class MusicService extends Service implements OnCompletionListener,
         // Register headset receiver
         registerReceiver(headsetReceiver, new IntentFilter(
                 Intent.ACTION_HEADSET_PLUG));
+        mHeadsetReceiverRegistered = true;
+
         songEnded = 0;
+        TRACK_PLAYING = false;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Context context = getApplicationContext();
 
+        Log.d(LOG_TAG, "** onStartCommand: intent action: " + intent.getAction());
+        if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
+
+            SERVICE_RUNNING = true;
+            Intent notificationIntent = new Intent(context, TrackPlayerFragment.class);
+            notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
+                    notificationIntent, 0);
+
+            Intent previousIntent = new Intent(context, MusicService.class);
+            previousIntent.setAction(Constants.ACTION.PREV_ACTION);
+            PendingIntent ppreviousIntent = PendingIntent.getService(this, 0,
+                    previousIntent, 0);
+
+            Intent playIntent = new Intent(context, MusicService.class);
+            playIntent.setAction(Constants.ACTION.PLAY_ACTION);
+            PendingIntent pplayIntent = PendingIntent.getService(this, 0,
+                    playIntent, 0);
+
+            Intent nextIntent = new Intent(context, MusicService.class);
+            nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
+            PendingIntent pnextIntent = PendingIntent.getService(this, 0,
+                    nextIntent, 0);
+
+            setUp(); // set up listeners, register receivers
+
+
+            int icon = R.mipmap.greyscale_thumb;
+            CharSequence tickerText = getResources().getString(R.string.ticket_text);
+
+            CharSequence contentTitle = getResources().getString(R.string.streamer);
+            CharSequence contentText = getResources().getString(R.string.content_text);
+
+            Notification notification = new NotificationCompat.Builder(context)
+                    .setContentTitle(contentTitle)
+                    .setTicker(tickerText)
+                    .setContentText(contentText)
+                    .setSmallIcon(icon)
+//                    .setLargeIcon(     // TODO: 6/30/15 set large icon with track image, passed by intent.
+//                            Bitmap.createScaledBitmap(icon, 128, 128, false))
+                    .setContentIntent(pendingIntent)
+                    .setOngoing(true)
+                    .addAction(android.R.drawable.ic_media_previous,
+                            "Prev", ppreviousIntent)
+                    .addAction(android.R.drawable.ic_media_play, "Play", // TODO: 6/30/15 add these strings
+                            pplayIntent)
+                    .addAction(android.R.drawable.ic_media_next, "Next",
+                            pnextIntent).build();
+
+            startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,
+                    notification);
+
+            // seekBar handler
+            setupHandler();
+
+        } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
+            Log.d(LOG_TAG, "action Play");
+            // start new track
+            mURL = intent.getExtras().getString("sentAudioLink");
+            mMediaPosition = 0;
+            setPlayer(mURL);
+
+            TRACK_PLAYING = true;
+
+        } else if (intent.getAction().equals(Constants.ACTION.PAUSE_ACTION)) {
+            Log.d(LOG_TAG, "action pause");
+            // pause player
+            mMediaPlayer.pause();
+            TRACK_PLAYING = false;
+
+        } else if (intent.getAction().equals(Constants.ACTION.RESUME_ACTION)) {
+            Log.i(LOG_TAG, "action resume");
+            // resume player
+            mMediaPlayer.start();
+            TRACK_PLAYING = true;
+
+        } else if (intent.getAction().equals(Constants.ACTION.STOPFOREGROUND_ACTION)) {
+            Log.i(LOG_TAG, "Received Stop Foreground Intent");
+            TRACK_PLAYING = false; // // TODO: 7/2/15 not needed as service is being shut down..? 
+            stopForeground(true);
+            stopSelf();
+        }
+
+        return START_STICKY;
+    }
+
+    private void setPlayer(String url) {
+        mMediaPlayer.reset();
+
+        try {
+            mMediaPlayer.setDataSource(url);
+
+            // Send message to Activity to display progress dialogue
+            //sendBufferingBroadcast();
+            // Prepare MediaPlayer
+            mMediaPlayer.prepare();
+            mMediaPlayer.start();
+
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+        }
+    }
+
+
+    private void setUp() {
         // receiver for seekBar change
         registerReceiver(broadcastReceiver, new IntentFilter(
                 TrackPlayerFragment.BROADCAST_SEEKBAR));
+        mBroadcastReceiverRegistered = true;
 
         // Manage incoming phone calls during playback.
         // Pause MediaPlayer on incoming calls, resume on hangup.
@@ -132,42 +256,6 @@ public class MusicService extends Service implements OnCompletionListener,
         // Register the listener with the telephony manager
         mTelephonyManager.listen(mPhoneStateListener,
                 PhoneStateListener.LISTEN_CALL_STATE);
-
-        initNotification();
-
-        mURL = intent.getExtras().getString("sentAudioLink");
-        int position = intent.getIntExtra("pausePosition", 0);
-        boolean newTrack = intent.getBooleanExtra("newTrack", true);
-        if (position != 0) {
-            mMediaPosition = position;
-        } else if (newTrack)
-            mMediaPosition = 0;
-
-        Log.d("MusicService: ", mURL);
-        mMediaPlayer.reset();
-
-        // Set up the MediaPlayer data source using intent extra
-        if (!mMediaPlayer.isPlaying()) {
-            try {
-                mMediaPlayer
-                        .setDataSource(mURL);
-
-                // Send message to Activity to display progress dialogue
-                sendBufferingBroadcast();
-                // Prepare MediaPlayer
-                mMediaPlayer.prepareAsync();
-
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-            }
-        }
-        // seekBar handler
-        setupHandler();
-
-        return START_STICKY;
     }
 
     // seekBar info to activity
@@ -185,7 +273,11 @@ public class MusicService extends Service implements OnCompletionListener,
 
     private void logMediaPosition(String state) {
 
-        Log.d(LOG_TAG, "method: logMediaPosition");
+        Log.d(LOG_TAG, "** ** method: logMediaPosition: state:" + state);
+        Log.d(LOG_TAG, "** ** method: logMediaPosition: mMediaPlayer.isPlaying():" + mMediaPlayer.isPlaying());
+        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaPosition)):" + String.valueOf(mMediaPosition));
+        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaMax)):" + String.valueOf(mMediaMax));
+
         if (mMediaPlayer.isPlaying() && state.equals(TRACK_RUNNING)) {
             mMediaPosition = mMediaPlayer.getCurrentPosition();
             mMediaMax = mMediaPlayer.getDuration();
@@ -196,8 +288,10 @@ public class MusicService extends Service implements OnCompletionListener,
             Log.d(LOG_TAG, "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         } else if (state.equals(TRACK_COMPLETED)) {
+
             // report track completed to TrackPlayerFragment
-            songEnded = 1;
+            Log.d(LOG_TAG, "method: logMediaPosition: state:" + state + " ** ** ** flipped songEnded boolean in onCompletion: " + songEnded);
+
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
@@ -276,11 +370,13 @@ public class MusicService extends Service implements OnCompletionListener,
         // Cancel the notification
         cancelNotification();
 
-        // Unregister headsetReceiver
-        unregisterReceiver(headsetReceiver);
+        if (mHeadsetReceiverRegistered)
+            // Unregister headsetReceiver
+            unregisterReceiver(headsetReceiver);
 
-        // Unregister seekbar receiver
-        unregisterReceiver(broadcastReceiver);
+        if (mBroadcastReceiverRegistered)
+            // Unregister seekbar receiver
+            unregisterReceiver(broadcastReceiver);
 
         // Stop the seekbar mHandler from sending updates to UI
         mHandler.removeCallbacks(sendUpdatesToUI);
@@ -329,7 +425,6 @@ public class MusicService extends Service implements OnCompletionListener,
         }
     }
 
-
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         switch (what) {
@@ -363,9 +458,7 @@ public class MusicService extends Service implements OnCompletionListener,
         songEnded = 1;
         // when track ends, notify TrackPlayerFragment to display Play button
         logMediaPosition(TRACK_COMPLETED);
-        stopMedia();
-        // service method, calling stop
-        stopSelf();
+        mMediaPlayer.reset();
     }
 
     @Override
@@ -395,36 +488,68 @@ public class MusicService extends Service implements OnCompletionListener,
         }
     }
 
-    // Create Notification
-    private void initNotification() {
-
-        //TODO: add media control buttons to allow user to update track from notification
-        String notificationService = Context.NOTIFICATION_SERVICE;
-
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(notificationService);
-
-        int icon = R.mipmap.greyscale_thumb;
-        CharSequence tickerText = getResources().getString(R.string.ticket_text);
-        Context context = getApplicationContext();
-        CharSequence contentTitle = getResources().getString(R.string.streamer);
-        CharSequence contentText = getResources().getString(R.string.content_text);
-
-        Intent notificationIntent = new Intent(this, TrackPlayerFragment.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
-                notificationIntent, 0);
-
-        // as of API level 11
-        Notification notification = new Notification.Builder(context)
-                .setContentTitle(contentTitle)
-                .setContentText(contentText)
-                .setTicker(tickerText)
-                .setSmallIcon(icon)
-                .setContentIntent(contentIntent)
-                        //.setLargeIcon(aBitmap) // TODO: set large icon
-                .build();
-        notification.flags = Notification.FLAG_ONGOING_EVENT;
-        mNotificationManager.notify(NOTIFICATION_ID, notification);
-    }
+//    // Create Notification
+//    private void initNotification() {
+//
+//        //TODO: add media control buttons to allow user to update track from notification
+//        String notificationService = Context.NOTIFICATION_SERVICE;
+//
+//        NotificationManager mNotificationManager = (NotificationManager) getSystemService(notificationService);
+//
+//        int icon = R.mipmap.greyscale_thumb;
+//        CharSequence tickerText = getResources().getString(R.string.ticket_text);
+//        Context context = getApplicationContext();
+//        CharSequence contentTitle = getResources().getString(R.string.streamer);
+//        CharSequence contentText = getResources().getString(R.string.content_text);
+//
+////        Intent notificationIntent = new Intent(this, TrackPlayerFragment.class);
+////        PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+////                notificationIntent, 0);
+//
+//        Intent notificationIntent = new Intent(this, TrackPlayerFragment.class);
+//        notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
+//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+//                notificationIntent, 0);
+//
+//        Intent previousIntent = new Intent(this, MusicService.class);
+//        previousIntent.setAction(Constants.ACTION.PREV_ACTION);
+//        PendingIntent ppreviousIntent = PendingIntent.getService(this, 0,
+//                previousIntent, 0);
+//
+//        Intent playIntent = new Intent(this, MusicService.class);
+//        playIntent.setAction(Constants.ACTION.PLAY_ACTION);
+//        PendingIntent pplayIntent = PendingIntent.getService(this, 0,
+//                playIntent, 0);
+//
+//        Intent nextIntent = new Intent(this, MusicService.class);
+//        nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
+//        PendingIntent pnextIntent = PendingIntent.getService(this, 0,
+//                nextIntent, 0);
+//
+//        // as of API level 11
+//        Notification notification = new Notification.Builder(context)
+//                .setContentTitle(contentTitle)
+//                .setContentText(contentText)
+//                .setTicker(tickerText)
+//                .setSmallIcon(icon)
+//                .setContentIntent(pendingIntent)
+//                        //.setLargeIcon(aBitmap) // TODO: set large icon
+//                .setContentIntent(pendingIntent)
+//                .setOngoing(true)
+//                .addAction(android.R.drawable.ic_media_previous,
+//                        "Previous", ppreviousIntent)
+//                .addAction(android.R.drawable.ic_media_play, "Play",
+//                        pplayIntent)
+//                .addAction(android.R.drawable.ic_media_next, "Next",
+//                        pnextIntent)
+//                .build();
+//        notification.flags = Notification.FLAG_ONGOING_EVENT;
+//        mNotificationManager.notify(NOTIFICATION_ID, notification);
+//
+//
+//    }
 
     // Cancel Notification
     private void cancelNotification() {

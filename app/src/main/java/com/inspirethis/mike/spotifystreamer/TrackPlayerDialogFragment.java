@@ -27,6 +27,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.inspirethis.mike.spotifystreamer.Util.Constants;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -160,7 +161,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             if (bMusicPlaying) {
                 Log.d(LOG_TAG, "bMusicPlaying true: " + bMusicPlaying + " playing track");
                 // resume to current position
-                playTrack(mTrack.preview_url, mCurrentPosition, false);
+                //playTrack(mTrack.preview_url, Constants.ACTION.RESUME_ACTION);
 
             } else {
                 FetchTrackTask task = new FetchTrackTask();
@@ -171,7 +172,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
 
     }
-
 
 
     @Override
@@ -185,8 +185,9 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case 0:
-                stopMusicService();
-                System.exit(0);
+                Intent quitIntent = new Intent(getActivity(), MusicService.class);
+                quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+                getActivity().startService(quitIntent);
                 getActivity().finish();
                 return true;
             default:
@@ -229,36 +230,41 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
+
     @OnClick(R.id.buttonPlay)
     public void playPause() {
-
+        Log.d(LOG_TAG, "****** bMusicPlaying " + bMusicPlaying + " mTrackEndedFlag: " + mTrackEndedFlag + " mSeekBar.getProgress(): " + mSeekBar.getProgress());
         if (!bMusicPlaying) {
+            bMusicPlaying = true;
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-
+            Log.d(LOG_TAG, "****** mTrackEndedFlag: " + mTrackEndedFlag + "mSeekBar.getProgress(): " + mSeekBar.getProgress());
             // resuming an existing track play
-            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1)
-                playTrack(mTrack.preview_url, mSeekBar.getProgress(), false);
+            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
+                playTrack(mTrack.preview_url, Constants.ACTION.RESUME_ACTION);
+            }
 
-                // start new track
+            // start new track
             else
-                playTrack(mTrack.preview_url, 0, true);
+                playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
 
             // replaying an existing track that has ended
-        } else if (mTrackEndedFlag == 1)
-            playTrack(mTrack.preview_url, 0, false);
+        } else if (mTrackEndedFlag == 1) {
+            playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION); //// TODO: 6/30/15 reset action needed?
 
-        else {
+        } else if (bMusicPlaying) {
             // track is playing, pausing track
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
-            stopMusicService();
+            bMusicPlaying = false;
+            playTrack(mTrack.preview_url, Constants.ACTION.PAUSE_ACTION);
         }
     }
+
 
     @OnClick(R.id.buttonNext)
     public void getNext() {
         mSeekBar.setProgress(0);
-        stopMusicService();
+        //unregisterReceiver();
 
         if (mCurrentIndex + 1 > mTrackItems.size() - 1) {
             mCurrentIndex = 0;
@@ -281,7 +287,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     @OnClick(R.id.buttonPrevious)
     public void getPrevious() {
         mSeekBar.setProgress(0);
-        stopMusicService();
+        //unregisterReceiver();
 
         if (mCurrentIndex - 1 < 0) {
             mCurrentIndex = mTrackItems.size() - 1;
@@ -300,7 +306,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         } else
             Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
     }
-
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -327,12 +332,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         else
             track_image.setImageResource(R.mipmap.greyscale_thumb);
     }
-//    @Override
-//    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-//                             Bundle savedInstanceState) {
-//        // Inflate the layout for this fragment
-//        return inflater.inflate(R.layout.fragment_track_player_dialog, container, false);
-//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -403,8 +402,13 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
                 // instantiate MusicService upon fetch of Track
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-                bMusicPlaying = true;
-                playTrack(mTrack.preview_url, 0, true);
+
+                if (!MusicService.SERVICE_RUNNING) {
+                    initService(mTrack.preview_url);
+                } else
+                    bMusicPlaying = true;
+                playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
+
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
             }
@@ -472,31 +476,70 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
-
-    private void playTrack(String url, int position, boolean newTrack) {
-        mTrackEndedFlag = 0;
-        if (isConnected()) {
-            mServiceIntent.putExtra("sentAudioLink", url);
-            mServiceIntent.putExtra("pausePosition", position);
-            mServiceIntent.putExtra("newTrack", newTrack);
-
+    private void unregisterReceiver() {
+        // unregister broadcastReceiver for seekBar
+        bMusicPlaying = false;
+        if (mBroadcastIsRegistered) {
             try {
-                getActivity().startService(mServiceIntent);
-//                mCurrentState = PLAYING;
-                bMusicPlaying = true;
+                getActivity().unregisterReceiver(broadcastReceiver);
+                mBroadcastIsRegistered = false;
             } catch (Exception e) {
+                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
                 e.printStackTrace();
             }
+        }
+
+        try {
+            Intent startIntent = new Intent(getActivity(), MusicService.class);
+            startIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+            getActivity().startService(startIntent);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initService(String url) {
+        mTrackEndedFlag = 0;
+        if (isConnected()) {
+
+            bMusicPlaying = true;
+
+            Intent startIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
+            startIntent.putExtra("sentAudioLink", url);
+            startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+            getActivity().startService(startIntent);
 
             getActivity().registerReceiver(broadcastReceiver, new IntentFilter(
                     MusicService.BROADCAST_ACTION));
             mBroadcastIsRegistered = true;
+
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
                     getResources().getString(R.string.network_connection_needed),
                     Toast.LENGTH_LONG).show();
         }
     }
+
+    private void playTrack(String url, String action) {
+        mTrackEndedFlag = 0;
+        if (isConnected()) {
+            //bMusicPlaying = true;
+            Intent startIntent = new Intent(getActivity(), MusicService.class);
+            startIntent.putExtra("sentAudioLink", url);
+            startIntent.setAction(action);
+            getActivity().startService(startIntent);
+        } else {
+            Toast.makeText(getActivity().getApplicationContext(),
+                    getResources().getString(R.string.network_connection_needed),
+                    Toast.LENGTH_LONG).show();
+        }
+
+        getActivity().registerReceiver(broadcastReceiver, new IntentFilter(MusicService.BROADCAST_ACTION));
+        mBroadcastIsRegistered = true;
+
+    }
+
 
     // progress dialogue for buffering
     private void showProgressDialog(Intent bufferIntent) {
@@ -589,8 +632,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
     }
-
-
 
 
 // TODO: remove listener interface if not needed

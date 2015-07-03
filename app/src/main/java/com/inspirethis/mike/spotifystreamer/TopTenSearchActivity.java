@@ -15,23 +15,20 @@ public class TopTenSearchActivity extends FragmentActivity {
         String artist = extras.getString("artist");
 
 
-        // if (savedInstanceState == null) {
+        if (savedInstanceState == null) {
+            Bundle arguments = new Bundle();
+            arguments.putString("artist", artist);
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
 
-        Bundle arguments = new Bundle();
-        arguments.putString("artist", artist);
-
-        FragmentTransaction ft = getFragmentManager().beginTransaction();
-
-        TopTenSearchFragment topTenSearchFragment = new TopTenSearchFragment();
-        topTenSearchFragment.setArguments(arguments);
-        ft.add(R.id.top_ten_container, topTenSearchFragment, "TopTenSearchFragment");
-        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-        ft.commit();
-
-        // }
+            TopTenSearchFragment topTenSearchFragment = new TopTenSearchFragment();
+            topTenSearchFragment.setArguments(arguments);
+            ft.add(R.id.top_ten_container, topTenSearchFragment, "TopTenSearchFragment");
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
+        }
     }
 
-//    @Override TODO: add menu
+//    @Override TODO: tie menus to MainActivity
 //    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 //        menu.clear();
 //        menu.add(getResources().getString(R.string.menu_item_1));
@@ -42,7 +39,7 @@ public class TopTenSearchActivity extends FragmentActivity {
 //    public boolean onOptionsItemSelected(MenuItem item) {
 //        switch (item.getItemId()) {
 //            case 0:
-//                //stopMusicService(); TODO: stop service from here
+//                //stopMusicService();
 //                System.exit(0);
 //                this.finish();
 //                return true;

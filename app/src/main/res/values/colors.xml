@@ -18,5 +18,6 @@
     <color name="semi_transparent">#73000000</color>
     <color name="transparent">#00000000</color>
     <color name="grey_text">#a29da3</color>
+    <color name="search_bar">#80c0ae</color>
 
 </resources>

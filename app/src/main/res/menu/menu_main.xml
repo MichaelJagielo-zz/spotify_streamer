@@ -3,8 +3,10 @@
     tools:context="com.inspirethis.mike.spotifystreamer.MainActivity">
     <item android:id="@+id/action_quit" android:title="@string/menu_item_1"
         android:orderInCategory="100" android:showAsAction="never" />
-    <item android:id="@+id/action_countrycode" android:title="@string/menu_item_2"
+    <item android:id="@+id/action_settings" android:title="@string/menu_item_2"
         android:orderInCategory="100" android:showAsAction="never" />
     <item android:id="@+id/action_sharetrack" android:title="@string/menu_item_3"
         android:orderInCategory="100" android:showAsAction="never" />
+    <item android:id="@+id/action_nowplaying" android:title="@string/menu_item_4"
+        android:orderInCategory="100" android:showAsAction="always" />
 </menu>

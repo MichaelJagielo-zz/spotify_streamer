@@ -11,9 +11,8 @@
 
     <View
         android:id="@+id/line_break"
-        android:layout_width="fill_parent"
-        android:layout_height="2dp"
-        android:background="#80c0ae" />
+        style="@style/artistSearchView"
+        android:layout_width="fill_parent" />
 
     <ListView
         android:id="@+id/listview_music"

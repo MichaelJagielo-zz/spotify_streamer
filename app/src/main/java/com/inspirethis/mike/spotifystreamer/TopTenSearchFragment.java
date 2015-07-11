@@ -2,10 +2,7 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.inspirethis.mike.spotifystreamer.Util.Utility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +45,7 @@ public class TopTenSearchFragment extends Fragment {
     }
 
     private void performSearch(String search) {
-        if (isConnected()) {
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             FetchTracksTask task = new FetchTracksTask();
             task.execute(search);
         } else
@@ -192,19 +191,19 @@ public class TopTenSearchFragment extends Fragment {
         }
     }
 
-    private boolean isConnected() {
-        return isWifiConnected() || isCellularConnected();
-    }
-
-    private boolean isWifiConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-    }
-
-    private boolean isCellularConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-    }
+//    private boolean isConnected() {
+//        return isWifiConnected() || isCellularConnected();
+//    }
+//
+//    private boolean isWifiConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+//    }
+//
+//    private boolean isCellularConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
+//    }
 }

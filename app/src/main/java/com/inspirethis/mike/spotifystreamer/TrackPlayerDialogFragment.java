@@ -6,8 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inspirethis.mike.spotifystreamer.Util.Constants;
+import com.inspirethis.mike.spotifystreamer.Util.Utility;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -494,7 +493,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
     private void initService() {
         mTrackEndedFlag = 0;
-        if (isConnected()) {
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             Intent startIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
             startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
@@ -512,7 +511,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     private void playTrack(String url, String action) {
         Log.d(LOG_TAG, "in playTrack: action: " + action);
         mTrackEndedFlag = 0;
-        if (isConnected()) {
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             Intent startIntent = new Intent(getActivity(), MusicService.class);
             if (url != null)
                 startIntent.putExtra("sentAudioLink", url);
@@ -595,21 +594,21 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     public void onStopTrackingTouch(SeekBar seekBar) {
     }
 
-    private boolean isConnected() {
-        return isWifiConnected() || isCellularConnected();
-    }
-
-    private boolean isWifiConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-    }
-
-    private boolean isCellularConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-    }
+//    private boolean isConnected() {
+//        return isWifiConnected() || isCellularConnected();
+//    }
+//
+//    private boolean isWifiConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+//    }
+//
+//    private boolean isCellularConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
+//    }
 
     @Override
     public void onDetach() {

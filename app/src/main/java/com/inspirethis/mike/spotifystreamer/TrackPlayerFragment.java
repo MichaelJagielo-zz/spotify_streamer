@@ -7,8 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.telephony.PhoneStateListener;
@@ -28,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inspirethis.mike.spotifystreamer.Util.Constants;
+import com.inspirethis.mike.spotifystreamer.Util.Utility;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -237,11 +236,11 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
             // start new track
             else
-                playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
+                playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
 
             // replaying an existing track that has ended
         } else if (mTrackEndedFlag == 1) {
-            playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
+            playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
         } else if (MusicService.TRACK_PLAYING) {
             // track is playing, pausing track
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
@@ -400,7 +399,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 if (!MusicService.SERVICE_RUNNING) {
                     initService();
                 }
-                playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
+                playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
 
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
@@ -490,7 +489,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     private void initService() {
         mTrackEndedFlag = 0;
-        if (isConnected()) {
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             Intent startIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
             startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
@@ -505,15 +504,45 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
 
-    private void playTrack(String url, String action) {
+//    private void playTrack(String url, String action) {
+//        Log.d(LOG_TAG, "in playTrack: action: " + action);
+//        mTrackEndedFlag = 0;
+//        if (isConnected()) {
+//            Intent startIntent = new Intent(getActivity(), MusicService.class);
+//            if (url != null)
+//                startIntent.putExtra("sentAudioLink", url);
+//            startIntent.setAction(action);
+//            getActivity().startService(startIntent);
+//        } else {
+//            Toast.makeText(getActivity().getApplicationContext(),
+//                    getResources().getString(R.string.network_connection_needed),
+//                    Toast.LENGTH_LONG).show();
+//        }
+//        registerReceiver();
+//    }
+
+    private void playTrack(Track track, String action) {
         Log.d(LOG_TAG, "in playTrack: action: " + action);
         mTrackEndedFlag = 0;
-        if (isConnected()) {
+        String url = null;
+        if (track != null)
+            url = track.preview_url;
+
+        //Track item = mCurrentTrackItem.
+
+//        String largeImagePath;
+//        if (mCurrentTrackItem.getImage_path_large() != null)
+//            largeImagePath = mCurrentTrackItem.getImage_path_large();
+
+
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             Intent startIntent = new Intent(getActivity(), MusicService.class);
             if (url != null)
                 startIntent.putExtra("sentAudioLink", url);
+            startIntent.putExtra("largeImagePath", mCurrentTrackItem.getImage_path_large());
             startIntent.setAction(action);
             getActivity().startService(startIntent);
+
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
                     getResources().getString(R.string.network_connection_needed),
@@ -592,19 +621,19 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     public void onStopTrackingTouch(SeekBar seekBar) {
     }
 
-    private boolean isConnected() {
-        return isWifiConnected() || isCellularConnected();
-    }
-
-    private boolean isWifiConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-    }
-
-    private boolean isCellularConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-    }
+//    private boolean isConnected() {
+//        return isWifiConnected() || isCellularConnected();
+//    }
+//
+//    private boolean isWifiConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
+//    }
+//
+//    private boolean isCellularConnected() {
+//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
+//    }
 }

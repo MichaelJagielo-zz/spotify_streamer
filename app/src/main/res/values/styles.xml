@@ -15,4 +15,9 @@
         <item name="android:textSize">15sp</item>
     </style>
 
+    <style name="artistSearchView">
+        <item name="android:layout_height">2dp</item>
+        <item name="android:background">@color/search_bar</item>
+    </style>
+
 </resources>

@@ -2,8 +2,8 @@
     android:id="@+id/widget33"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:layout_marginBottom="20dp"
-    android:layout_marginTop="10dp">
+    android:layout_marginBottom="@dimen/fragment_track_player_bottom_margin"
+    android:layout_marginTop="@dimen/fragment_track_player_top_margin">
 
     <TextView
         android:id="@+id/tvArtistName"

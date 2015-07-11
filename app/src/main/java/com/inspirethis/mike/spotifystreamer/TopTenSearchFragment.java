@@ -3,7 +3,6 @@ package com.inspirethis.mike.spotifystreamer;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,15 +15,17 @@ import android.widget.Toast;
 import com.inspirethis.mike.spotifystreamer.Util.Utility;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyError;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
-import kaaes.spotify.webapi.android.models.TracksPager;
+import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.Callback;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * TopTenListViewAdapter class, displays results of Top Ten query for given Artist on Spotify API
@@ -39,15 +40,15 @@ public class TopTenSearchFragment extends Fragment {
     private ArrayList<TrackItem> mTrackItems;
     private int mCurrentIndex;
     private String mArtist;
-    private boolean mTwoPane;
+    private String mID;
+    //private boolean mTwoPane;
 
     public TopTenSearchFragment() {
     }
 
     private void performSearch(String search) {
         if (Utility.isConnected(getActivity().getApplicationContext())) {
-            FetchTracksTask task = new FetchTracksTask();
-            task.execute(search);
+            fetchTopTen(search);
         } else
             Toast.makeText(getActivity(), getResources().getString(R.string.network_connection_needed), Toast.LENGTH_SHORT).show();
     }
@@ -66,9 +67,11 @@ public class TopTenSearchFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            mArtist = bundle.getString("artist");
+            mArtist = bundle.getString("artist_name");
+            mID = bundle.getString("artist_id");
+            Log.d("", "mID value in topTenSearchFragment: " + mID);
             if (mTrackItems.size() == 0)
-                performSearch(mArtist);
+                    performSearch(mID);
         }
     }
 
@@ -108,7 +111,7 @@ public class TopTenSearchFragment extends Fragment {
 
 
                 if (getActivity().findViewById(R.id.track_player_container) != null) {
-                    mTwoPane = true;
+                    //mTwoPane = true;
                     // adding DialogFragment for view overlay on two pane view
                     TrackPlayerDialogFragment trackPlayerFragment = (TrackPlayerDialogFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
                     if (trackPlayerFragment == null) {
@@ -121,7 +124,7 @@ public class TopTenSearchFragment extends Fragment {
                         ft.commit();
                     }
                 } else {
-                    mTwoPane = false;
+                    //mTwoPane = false;
 
                     Intent trackPlayer = new Intent(getActivity(), TrackPlayerActivity.class).putExtras(bundle);
                     startActivity(trackPlayer);
@@ -131,79 +134,67 @@ public class TopTenSearchFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchTracksTask extends AsyncTask<String, Void, List<Track>> {
-        private final String LOG_TAG = FetchTracksTask.class.getSimpleName();
+    private void fetchTopTen(String id) {
+Log.d("", " in fetchTopTen: id: " + id);
+        Map<String, Object> queryMap = new HashMap<>();
+        queryMap.put(SpotifyService.COUNTRY, MainActivity.COUNTRY_CODE);
 
-        @Override
-        protected List<Track> doInBackground(String... params) {
+        SpotifyApi api = new SpotifyApi();
+        SpotifyService spotify = api.getService();
 
-            if (params.length == 0 || params[0].equals("")) {
-                return null;
-            }
 
-            TracksPager tracksPager = null;
+        spotify.getArtistTopTrack(id, queryMap, new Callback<Tracks>() {
+            @Override
+            public void success(final Tracks tracks, Response response) {
 
-            try {
-                SpotifyApi api = new SpotifyApi();
-                SpotifyService spotify = api.getService();
-                tracksPager = spotify.searchTracks(params[0]);
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mToptenAdapter != null)
+                            mToptenAdapter.clear();
+                        if (tracks.tracks.isEmpty()) {
+                            Toast.makeText(getActivity(), getResources().getString(R.string.no_tracks_found), Toast.LENGTH_SHORT).show();
 
-            } catch (RetrofitError error) {
+                        } else {
+                            for (Track t : tracks.tracks) {
+                                Log.d("", "track URI: " + t.uri);
 
-                SpotifyError spotifyError = SpotifyError.fromRetrofitError(error);
-                Log.d(LOG_TAG, spotifyError.getMessage());
-                return null;
-            }
+                                String url_small_image = "";
+                                String url_large_image = "";
 
-            return tracksPager.tracks.items;
-        }
+                                if (t.album.images.size() > 0) {
+                                    for (Image img : t.album.images) {
+                                        if (img.width < 250)
+                                            url_small_image = img.url;
+                                        if (img.width > 600)
+                                            url_large_image = img.url;
+                                    }
 
-        @Override
-        protected void onPostExecute(List<Track> result) {
-            if (result != null) {
-                if (result.size() == 0)
-                    Toast.makeText(getActivity(), getResources().getString(R.string.no_artists_found), Toast.LENGTH_SHORT).show();
-                if (mToptenAdapter != null)
-                    mToptenAdapter.clear();
-                for (Track t : result) {
-                    Log.d("", "track URI: " + t.uri);
-
-                    String url_small_image = "";
-                    String url_large_image = "";
-
-                    if (t.album.images.size() > 0) {
-                        for (Image img : t.album.images) {
-                            if (img.width < 250)
-                                url_small_image = img.url;
-                            if (img.width > 600)
-                                url_large_image = img.url;
+                                    if (url_small_image.equals(""))
+                                        url_small_image = t.album.images.get(0).url;
+                                    if (url_large_image.equals(""))
+                                        url_large_image = t.album.images.get(0).url;
+                                    mTrackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
+                                    Log.d("", "mTrackItems size: " + mTrackItems.size());
+                                }
+                            }
                         }
-
-                        if (url_small_image.equals(""))
-                            url_small_image = t.album.images.get(0).url;
-                        if (url_large_image.equals(""))
-                            url_large_image = t.album.images.get(0).url;
-
-                        mTrackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
                     }
-                }
-            }
-        }
-    }
 
-//    private boolean isConnected() {
-//        return isWifiConnected() || isCellularConnected();
-//    }
-//
-//    private boolean isWifiConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-//    }
-//
-//    private boolean isCellularConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-//    }
+                });
+            }
+
+
+            @Override
+            public void failure(final RetrofitError error) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getActivity(), getResources().getString(R.string.error_top_ten_search), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+    }
 }

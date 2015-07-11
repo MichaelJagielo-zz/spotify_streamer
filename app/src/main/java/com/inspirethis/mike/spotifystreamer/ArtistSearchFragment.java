@@ -42,7 +42,7 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
 
 
     public interface Callback {
-        public void onItemSelected(String date);
+        public void onItemSelected(String id, String artist);
     }
 
     public ArtistSearchFragment() {
@@ -122,12 +122,9 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 hideKeyboard();
                 String artist = mMusicListAdapter.getItem(position).getName();
-                Bundle bundle = new Bundle();
-                bundle.putString("artist", artist);
-
+                String id = mMusicListAdapter.getItem(position).getSpotifyId();
                 ((Callback)getActivity())
-                        .onItemSelected(artist);
-
+                        .onItemSelected(id, artist);
             }
         });
         return rootView;

@@ -413,6 +413,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
+    // TODO: add method to Utility class
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
     private String milliSecondsToTimer(long milliseconds) {
         String finalTimerString = "";
@@ -593,22 +594,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
     }
-
-//    private boolean isConnected() {
-//        return isWifiConnected() || isCellularConnected();
-//    }
-//
-//    private boolean isWifiConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-//    }
-//
-//    private boolean isCellularConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-//    }
 
     @Override
     public void onDetach() {

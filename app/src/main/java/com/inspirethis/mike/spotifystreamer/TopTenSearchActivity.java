@@ -12,12 +12,14 @@ public class TopTenSearchActivity extends FragmentActivity {
         setContentView(R.layout.activity_top_ten_search);
 
         Bundle extras = getIntent().getExtras();
-        String artist = extras.getString("artist");
+        String artist_id = extras.getString("artist_id");
+        String artist_name = extras.getString("artist_name");
 
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
-            arguments.putString("artist", artist);
+            arguments.putString("artist_id", artist_id);
+            arguments.putString("artist_name", artist_name);
             FragmentTransaction ft = getFragmentManager().beginTransaction();
 
             TopTenSearchFragment topTenSearchFragment = new TopTenSearchFragment();
@@ -27,25 +29,5 @@ public class TopTenSearchActivity extends FragmentActivity {
             ft.commit();
         }
     }
-
-//    @Override TODO: tie menus to MainActivity
-//    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//        menu.clear();
-//        menu.add(getResources().getString(R.string.menu_item_1));
-//        super.onCreateOptionsMenu(menu, inflater);
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            case 0:
-//                //stopMusicService();
-//                System.exit(0);
-//                this.finish();
-//                return true;
-//            default:
-//                return super.onOptionsItemSelected(item);
-//        }
-//    }
 
 }

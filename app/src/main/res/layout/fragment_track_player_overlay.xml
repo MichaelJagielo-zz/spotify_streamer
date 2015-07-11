@@ -7,8 +7,8 @@
 
     <RelativeLayout
         android:id="@+id/widget33"
-        android:layout_width="500dp"
-        android:layout_height="530dp"
+        android:layout_width="530dp"
+        android:layout_height="565dp"
         android:layout_gravity="center_horizontal|top"
         android:background="@color/white">
 
@@ -52,7 +52,7 @@
             android:layout_below="@+id/tvTrackName"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp" />
+            android:layout_marginTop="2dp" />
 
         <TextView
             android:id="@+id/tvCurrentTime"

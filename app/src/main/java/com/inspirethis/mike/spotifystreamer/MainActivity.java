@@ -28,12 +28,13 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     public static String COUNTRY_CODE;
     public static boolean SHOW_NOTIFICATIONS;
     private SharedPreferences mSettings;
+    private static MenuItem mNowPlaying;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        //getActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (findViewById(R.id.top_ten_container) != null) {
             mTwoPane = true;
@@ -84,8 +85,15 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mNowPlaying = menu.getItem(3);
+        //mNowPlaying.setEnabled(false);
+        setNowPlayingItem(false);
         return true;
 
+    }
+
+    public static void setNowPlayingItem(boolean bool) {
+        mNowPlaying.setEnabled(bool);
     }
 
     @Override
@@ -93,7 +101,6 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
         Log.d("", "onOptionsItemsSelected: item " + item.toString() + "  " + item.getItemId());
 
         switch (item.getItemId()) {
-            // todo: Respond to the action bar's Up/Home button ??
             case R.id.action_quit:
                 //NavUtils.navigateUpFromSameTask(this); ??
                 if (MusicService.SERVICE_RUNNING) {
@@ -105,9 +112,9 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                 this.finish();
                 return true;
             case R.id.action_nowplaying:
-                // TODO: 7/8/15 enable / disable this menu item according to if track has been selected.
-                Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
-                startActivity(nowPlaying);
+                // TODO: 7/12/15 navigate back to previous fragment 
+//                Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
+//                startActivity(nowPlaying);
                 return true;
 
             case R.id.action_settings:

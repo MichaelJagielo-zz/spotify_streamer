@@ -405,6 +405,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
                 if (!MusicService.SERVICE_RUNNING) {
                     initService();
                 }
+                MainActivity.setNowPlayingItem(true);
                 playTrack(mTrack.preview_url, Constants.ACTION.PLAY_ACTION);
 
             } else {

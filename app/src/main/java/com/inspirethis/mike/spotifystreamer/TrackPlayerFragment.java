@@ -399,6 +399,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 if (!MusicService.SERVICE_RUNNING) {
                     initService();
                 }
+                MainActivity.setNowPlayingItem(true);
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
 
             } else {

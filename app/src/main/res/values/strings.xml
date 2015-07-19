@@ -17,6 +17,7 @@
     <string name="streamer">Spotify Streamer</string>
     <string name="ticket_text">Sample Ticker Text</string>
     <string name="content_text">content text</string>
+    <string name="quit_track">Quit Track</string>
     <string name="menu_item_1">Quit</string>
     <string name="menu_item_2">Settings</string>
     <string name="menu_item_3">Share Track</string>

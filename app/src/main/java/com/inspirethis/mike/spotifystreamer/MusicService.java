@@ -57,7 +57,7 @@ public class MusicService extends Service implements OnCompletionListener,
 
 
     private final Handler mHandler = new Handler();
-    private static int songEnded = 0;
+    public static int songEnded = 0;
     public static final String BROADCAST_ACTION = "com.inspirethis.mike.spotifystreamer.seekprogress";
 
     // Set up broadcast identifier and seekBarIntent
@@ -101,7 +101,7 @@ public class MusicService extends Service implements OnCompletionListener,
     public int onStartCommand(Intent intent, int flags, int startId) {
         Context context = getApplicationContext();
 
-        Log.d(LOG_TAG, "** onStartCommand: intent action: " + intent.getAction());
+        //Log.d(LOG_TAG, "** onStartCommand: intent action: " + intent.getAction());
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
 
             SERVICE_RUNNING = true;
@@ -162,11 +162,16 @@ public class MusicService extends Service implements OnCompletionListener,
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
             Log.d(LOG_TAG, "action Play");
             // start new track
-            mURL = intent.getExtras().getString("sentAudioLink");
+            //if (intent.getExtras().getString("sentAudioLink") != null)
+                mURL = intent.getExtras().getString("sentAudioLink");
             mMediaPosition = 0;
-            setPlayer(mURL);
+            if (mURL != null)
+                setPlayer(mURL);
+            else {
+                //TODO: toast user: track not found please try again.
+            }
 
-            TRACK_PLAYING = true;
+
 
         } else if (intent.getAction().equals(Constants.ACTION.PAUSE_ACTION)) {
             Log.d(LOG_TAG, "action pause");
@@ -201,6 +206,8 @@ public class MusicService extends Service implements OnCompletionListener,
             // Prepare MediaPlayer
             mMediaPlayer.prepare();
             mMediaPlayer.start();
+
+            TRACK_PLAYING = true;
 
         } catch (IllegalArgumentException e) {
             e.printStackTrace();

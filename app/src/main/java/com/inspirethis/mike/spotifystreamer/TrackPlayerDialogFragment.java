@@ -97,15 +97,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
     private final String LOG_TAG = TrackPlayerDialogFragment.class.getSimpleName();
 
-//    /**
-//     * Use this factory method to create a new instance of
-//     * this fragment using the provided parameters.
-//     *
-//     * @param param1 Parameter 1.
-//     * @param param2 Parameter 2.
-//     * @return A new instance of fragment TrackPlayerDialogFragment.
-//     */
-//    // TODO: Remove.
 //    public static TrackPlayerDialogFragment newInstance(String param1, String param2) {
 //        TrackPlayerDialogFragment fragment = new TrackPlayerDialogFragment();
 //        Bundle args = new Bundle();
@@ -130,7 +121,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
                 mCurrentIndex = bundle.getInt("index");
                 mTrackItems = bundle.getParcelableArrayList("tracks_list");
                 mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
-                Log.d(LOG_TAG, "onCreate: mCurrentTrackItem name: " + mCurrentTrackItem.getName());
+                //Log.d(LOG_TAG, "onCreate: mCurrentTrackItem name: " + mCurrentTrackItem.getName());
                 // get started playing that first track
                 if (mCurrentTrackItem != null) {
                     FetchTrackTask task = new FetchTrackTask();
@@ -138,7 +129,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
                 }
-                Log.d(LOG_TAG, "** ** ** onCreate: bundle not null, mCurrentPosition: " + mCurrentPosition + " mTrackItems size " + mTrackItems.size());
+                //Log.d(LOG_TAG, "** ** ** onCreate: bundle not null, mCurrentPosition: " + mCurrentPosition + " mTrackItems size " + mTrackItems.size());
             }
             // subsequent run, get last settings
         } else {
@@ -149,7 +140,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             mCurrentTime = savedInstanceState.getString("current_time");
             mFinalTime = savedInstanceState.getString("final_time");
 
-            Log.d(LOG_TAG, "onCreate: * bundle null, bMusicPlaying: mTrackItems size " + mTrackItems.size() + " mCurrentPosition: " + mCurrentPosition);
+            //Log.d(LOG_TAG, "onCreate: * bundle null, bMusicPlaying: mTrackItems size " + mTrackItems.size() + " mCurrentPosition: " + mCurrentPosition);
 
             if (mCurrentTrackItem == null)
                 Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
@@ -414,7 +405,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
-    // TODO: add method to Utility class
+    // TODO: add this method to Utility class
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
     private String milliSecondsToTimer(long milliseconds) {
         String finalTimerString = "";
@@ -442,18 +433,18 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         return finalTimerString;
     }
 
-    private int getProgressPercentage(long currentDuration, long totalDuration) {
-        Double percentage = (double) 0;
-
-        long currentSeconds = (int) (currentDuration / 1000);
-        long totalSeconds = (int) (totalDuration / 1000);
-
-        // calculating percentage
-        percentage = (((double) currentSeconds) / totalSeconds) * 100;
-
-        // return percentage
-        return percentage.intValue();
-    }
+//    private int getProgressPercentage(long currentDuration, long totalDuration) {
+//        Double percentage = (double) 0;
+//
+//        long currentSeconds = (int) (currentDuration / 1000);
+//        long totalSeconds = (int) (totalDuration / 1000);
+//
+//        // calculating percentage
+//        percentage = (((double) currentSeconds) / totalSeconds) * 100;
+//
+//        // return percentage
+//        return percentage.intValue();
+//    }
 
     private void registerReceiver() {
 

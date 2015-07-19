@@ -57,10 +57,10 @@ public class TopTenSearchFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState == null || !savedInstanceState.containsKey("track items")) {
+        if (savedInstanceState == null || !savedInstanceState.containsKey("track_items")) {
             mTrackItems = new ArrayList<>();
         } else {
-            mTrackItems = savedInstanceState.getParcelableArrayList("track items");
+            mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
         }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
@@ -79,8 +79,8 @@ public class TopTenSearchFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (mTrackItems != null) {
-            outState.putParcelableArrayList("track items", mTrackItems);
-            outState.putInt("index", mCurrentIndex);
+            outState.putParcelableArrayList("track_items", mTrackItems);
+            outState.putInt("current_index", mCurrentIndex);
         }
 
         super.onSaveInstanceState(outState);
@@ -106,8 +106,8 @@ public class TopTenSearchFragment extends Fragment {
                 TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);
 
                 Bundle bundle = new Bundle();
-                bundle.putInt("index", mCurrentIndex); //// TODO: 7/2/15 create static TAG for keys. store these in Constants class
-                bundle.putParcelableArrayList("tracks_list", mTrackItems);
+                bundle.putInt("current_index", mCurrentIndex); //// TODO: 7/2/15 create static TAG for keys. store these in Constants class
+                bundle.putParcelableArrayList("track_items", mTrackItems);
 
 
                 if (getActivity().findViewById(R.id.track_player_container) != null) {

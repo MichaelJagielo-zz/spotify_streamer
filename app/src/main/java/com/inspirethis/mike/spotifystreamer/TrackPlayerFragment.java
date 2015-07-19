@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -25,6 +26,8 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.inspirethis.mike.spotifystreamer.Util.Constants;
 import com.inspirethis.mike.spotifystreamer.Util.Utility;
 import com.squareup.picasso.Picasso;
@@ -52,6 +55,9 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private Track mTrack;
     private int mCurrentIndex;
     private ArrayList<TrackItem> mTrackItems;
+
+    // for keeping track of when user navigates back from MainActivity through "Now Playing" button
+    private boolean mNavBack;
 
     @InjectView(R.id.tvArtistName)
     TextView artist_name;
@@ -106,39 +112,70 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
     public TrackPlayerFragment() {
+
     }
+
+//    public static final TrackPlayerFragment newInstance(int currentIndex, ArrayList<TrackItem> trackItems) {
+//        Log.d("", "inTrackPlayerFragment: newInstance: ");
+//        mNavBack = true;
+//        TrackPlayerFragment fragment = new TrackPlayerFragment();
+//        Bundle b = new Bundle(1);
+//        b.putInt("current_index", currentIndex);
+//        b.putParcelableArrayList("track_items", trackItems);
+//        fragment.setArguments(b);
+//        return fragment;
+//    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // is the first run
         if (savedInstanceState == null) {
             Bundle bundle = getArguments();
             if (bundle != null) {
-                mCurrentIndex = bundle.getInt("index");
-                mTrackItems = bundle.getParcelableArrayList("tracks_list");
+                mCurrentIndex = bundle.getInt("current_index");
+                mTrackItems = bundle.getParcelableArrayList("track_items");
                 mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
                 Log.d(LOG_TAG, "onCreate: mCurrentTrackItem name: " + mCurrentTrackItem.getName());
+                mNavBack = bundle.getBoolean("nav_back", false); // if true dont play track
                 // get started playing that first track
-                if (mCurrentTrackItem != null) {
+                if (mCurrentTrackItem != null && !mNavBack) {
                     FetchTrackTask task = new FetchTrackTask();
                     task.execute(mCurrentTrackItem.getSpotifyId());
+                } else if (mNavBack) {
+                    if (!MusicService.TRACK_PLAYING) {
+                        playTrack(null, Constants.ACTION.RESUME_ACTION);
+                    }
+
+                    if (MusicService.songEnded == 1) {
+                        FetchTrackTask task = new FetchTrackTask();
+                        task.execute(mCurrentTrackItem.getSpotifyId());
+                    }
+
+                    if (mCurrentTrackItem == null)
+                        Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
+
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
                 }
-                Log.d(LOG_TAG, "** ** ** onCreate: bundle not null, mCurrentPosition: " + mCurrentPosition + " mTrackItems size " + mTrackItems.size());
+                //Log.d(LOG_TAG, "** ** ** onCreate: bundle not null, mCurrentPosition: " + mCurrentPosition + " mTrackItems size " + mTrackItems.size());
             }
             // subsequent run, get last settings
         } else {
-            mTrackItems = savedInstanceState.getParcelableArrayList("list");
+            mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
             mCurrentIndex = savedInstanceState.getInt("current_index");
             mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
             mCurrentPosition = savedInstanceState.getInt("current_position", 0);
             mCurrentTime = savedInstanceState.getString("current_time");
             mFinalTime = savedInstanceState.getString("final_time");
 
-            Log.d(LOG_TAG, "onCreate: * bundle null, bMusicPlaying: mTrackItems size " + mTrackItems.size() + " mCurrentPosition: " + mCurrentPosition);
+            // if Now Playing button was clicked
+            SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+            if (prefs != null) {
+                // get saved track data
+                mCurrentPosition = prefs.getInt("current_position", 0);
+                mCurrentTime = prefs.getString("current_time", "");
+                mFinalTime = prefs.getString("final_time", "");
+            }
 
             if (mCurrentTrackItem == null)
                 Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
@@ -148,7 +185,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
-        menu.add(getResources().getString(R.string.menu_item_1));
+        menu.add(getResources().getString(R.string.quit_track));
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -197,50 +234,72 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         int seekProgress = Integer.parseInt(currentDuration);
         int seekMax = Integer.parseInt(totalDuration);
         mTrackEndedFlag = Integer.parseInt(strSongEnded);
-
-        Log.d("", "updateUI  mTrackEndedFlag: " + mTrackEndedFlag);
-        Log.d("", "updateUI: mSeekBar.getMax(): " + mSeekBar.getMax());
-
-        Log.d("", "*** updateUI: mSeekBar.getProgress(): " + mSeekBar.getProgress());
-
-        Log.d("", "updateUI  strSongEnded: " + strSongEnded);
-        Log.d("", "updateUI: totalDuration: " + totalDuration);
-
-        Log.d("", "*** updateUI: currentDuration: " + currentDuration);
-
-        Log.d("", "*** updateUI: tvCurrentTime is null: " + (tvCurrentTime == null));
-
-        Log.d("", "*** updateUI: tvCurrentTime text: " + (tvCurrentTime.getText().toString()));
+//
+//        Log.d("", "updateUI  mTrackEndedFlag:    " + mTrackEndedFlag);
+//        Log.d("", "updateUI: mSeekBar.getMax(): " + mSeekBar.getMax());
+//
+//        Log.d("", "*** updateUI: mSeekBar.getProgress(): " + mSeekBar.getProgress());
+//
+//        Log.d("", "updateUI  strSongEnded: " + strSongEnded);
+//        Log.d("", "updateUI: totalDuration: " + totalDuration);
+//
+//        Log.d("", "*** updateUI: currentDuration: " + currentDuration);
+//
+//        Log.d("", "*** updateUI: tvCurrentTime is null: " + (tvCurrentTime == null));
+//
+//        Log.d("", "*** updateUI: tvCurrentTime text: " + (tvCurrentTime.getText().toString()));
 
         mSeekBar.setMax(seekMax);
         mSeekBar.setProgress(seekProgress);
 
-        if (mTrackEndedFlag == 1) {
+        if (mTrackEndedFlag == 1 && !mNavBack) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             mSeekBar.setProgress(0);
             tvCurrentTime.setText(milliSecondsToTimer(0));
-        }
+        } else
+            btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
     }
 
     @OnClick(R.id.buttonPlay)
     public void playPause() {
-        Log.d(LOG_TAG, "playPause method onCLick:  mTrackEndedFlag: " + mTrackEndedFlag + " mSeekBar.getProgress(): " + mSeekBar.getProgress());
         if (!MusicService.TRACK_PLAYING) {
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-            Log.d(LOG_TAG, "****** mTrackEndedFlag: " + mTrackEndedFlag + "mSeekBar.getProgress(): " + mSeekBar.getProgress());
             // resuming an existing track play
             if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
                 playTrack(null, Constants.ACTION.RESUME_ACTION);
+                saveTracksInfo();
             }
-
             // start new track
             else
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
 
             // replaying an existing track that has ended
         } else if (mTrackEndedFlag == 1) {
-            playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
+            if (mTrack != null)
+                playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
+            else {
+                SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+                if (prefs != null) {
+                    GsonBuilder gsonb = new GsonBuilder();
+                    Gson gson = gsonb.create();
+                    int size = prefs.getInt("list_size", 0);
+                    if (size != 0) {
+                        ArrayList<TrackItem> list = new ArrayList(prefs.getInt("list_size", 0));
+                        for (int i = 0; i < size; i++) {
+                            String objectString = prefs.getString(String.valueOf(i), "");
+                            if (!objectString.equals(""))
+                                list.add(gson.fromJson(objectString, TrackItem.class));
+                        }
+                        mTrackItems = list;
+                    }
+                }
+                mCurrentIndex = prefs.getInt("current_index", 0);
+                mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
+
+                FetchTrackTask task = new FetchTrackTask();
+                task.execute(mCurrentTrackItem.getSpotifyId());
+            }
         } else if (MusicService.TRACK_PLAYING) {
             // track is playing, pausing track
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
@@ -252,21 +311,18 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @OnClick(R.id.buttonNext)
     public void getNext() {
         mSeekBar.setProgress(0);
-
         if (mCurrentIndex + 1 > mTrackItems.size() - 1) {
             mCurrentIndex = 0;
         } else {
             mCurrentIndex = mCurrentIndex + 1;
         }
-
         mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
-
         if (mCurrentTrackItem != null) {
             FetchTrackTask task = new FetchTrackTask();
             task.execute(mCurrentTrackItem.getSpotifyId());
             resetTrackData();
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
-
+            saveTracksInfo();
         } else
             Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
     }
@@ -280,30 +336,43 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         } else {
             mCurrentIndex = mCurrentIndex - 1;
         }
-
         mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
-
         if (mCurrentTrackItem != null) {
             FetchTrackTask task = new FetchTrackTask();
             task.execute(mCurrentTrackItem.getSpotifyId());
             resetTrackData();
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
-
+            saveTracksInfo();
         } else
             Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
     }
 
+    // helper method to store current tracks information
+    private void saveTracksInfo() {
+        if (mTrackItems != null) {
+            SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+            SharedPreferences.Editor e = prefs.edit();
+            Gson gson = new Gson();
+            for (int i = 0; i < mTrackItems.size(); i++) {
+                e.putString(String.valueOf(i), gson.toJson(mTrackItems.get(i)));
+            }
+            e.putInt("list_size", mTrackItems.size());
+            e.putInt("current_index", mCurrentIndex);
+            e.putInt("current_position", mSeekBar.getProgress());
+            e.putString("current_time", tvCurrentTime.getText().toString());
+            e.putString("final_time", tvFinalTime.getText().toString());
+            e.commit();
+        }
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList("list", mTrackItems);
+        outState.putParcelableArrayList("track_items", mTrackItems);
         outState.putInt("current_index", mCurrentIndex);
         outState.putInt("current_position", mSeekBar.getProgress());
         outState.putString("current_time", tvCurrentTime.getText().toString());
         outState.putString("final_time", tvFinalTime.getText().toString());
-
         unregisterReceiver();
-
         super.onSaveInstanceState(outState);
     }
 
@@ -325,7 +394,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         View rootView = inflater.inflate(R.layout.fragment_track_player, null);
         ButterKnife.inject(this, rootView);
 
@@ -338,11 +406,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         btnNext.setBackgroundResource(android.R.drawable.ic_media_next);
         btnPrevious.setBackgroundResource(android.R.drawable.ic_media_previous);
 
-        if (MusicService.TRACK_PLAYING)
-            btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-        else
-            btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
-
         if (mCurrentTrackItem.getImage_path_large() != null && !mCurrentTrackItem.getImage_path_large().equals(""))
             Picasso.with(getActivity().getApplicationContext()).load(mCurrentTrackItem.getImage_path_large()).into(track_image);
         else
@@ -354,11 +417,10 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             // seekBarIntent for broadcasting new position to service
             seekBarIntent = new Intent(BROADCAST_SEEKBAR);
             mSeekBar.setOnSeekBarChangeListener(this);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        mNavBack = false;
         return rootView;
     }
 
@@ -377,22 +439,18 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 SpotifyApi api = new SpotifyApi();
                 SpotifyService spotify = api.getService();
                 track = spotify.getTrack(params[0]);
-
             } catch (RetrofitError error) {
                 SpotifyError spotifyError = SpotifyError.fromRetrofitError(error);
                 Log.d(LOG_TAG, spotifyError.getMessage());
                 return null;
             }
-
             return track;
         }
 
         @Override
         protected void onPostExecute(Track result) {
             if (result != null) {
-                //mInitialRun = false;
                 mTrack = result;
-
                 // instantiate MusicService upon fetch of Track
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
 
@@ -429,39 +487,16 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             secondsString = "" + seconds;
         }
 
-        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+        return finalTimerString + minutes + ":" + secondsString;
 
-        // return timer string
-        return finalTimerString;
     }
-
-    private int getProgressPercentage(long currentDuration, long totalDuration) {
-        Double percentage = (double) 0;
-
-        long currentSeconds = (int) (currentDuration / 1000);
-        long totalSeconds = (int) (totalDuration / 1000);
-
-        // calculating percentage
-        percentage = (((double) currentSeconds) / totalSeconds) * 100;
-
-        // return percentage
-        return percentage.intValue();
-    }
-
 
     private void registerReceiver() {
-
         if (!mBroadcastIsRegistered) {
             getActivity().registerReceiver(mBroadcastReceiver, new IntentFilter(
                     MusicService.BROADCAST_ACTION));
             mBroadcastIsRegistered = true;
         }
-
-//        if (!mBufferBroadcastIsRegistered) {
-//            getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
-//                    MusicService.BROADCAST_ACTION));
-//            mBufferBroadcastIsRegistered = true;
-//        }
     }
 
     private void unregisterReceiver() {
@@ -475,18 +510,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 e.printStackTrace();
             }
         }
-
-//        if (mBufferBroadcastIsRegistered) {
-//            try {
-//                getActivity().unregisterReceiver(mBroadcastBufferReceiver);
-//                mBufferBroadcastIsRegistered = false;
-//            } catch (Exception e) {
-//                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
-//                e.printStackTrace();
-//            }
-//        }
     }
-
 
     private void initService() {
         mTrackEndedFlag = 0;
@@ -504,38 +528,11 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
     }
 
-
-//    private void playTrack(String url, String action) {
-//        Log.d(LOG_TAG, "in playTrack: action: " + action);
-//        mTrackEndedFlag = 0;
-//        if (isConnected()) {
-//            Intent startIntent = new Intent(getActivity(), MusicService.class);
-//            if (url != null)
-//                startIntent.putExtra("sentAudioLink", url);
-//            startIntent.setAction(action);
-//            getActivity().startService(startIntent);
-//        } else {
-//            Toast.makeText(getActivity().getApplicationContext(),
-//                    getResources().getString(R.string.network_connection_needed),
-//                    Toast.LENGTH_LONG).show();
-//        }
-//        registerReceiver();
-//    }
-
     private void playTrack(Track track, String action) {
-        Log.d(LOG_TAG, "in playTrack: action: " + action);
         mTrackEndedFlag = 0;
         String url = null;
         if (track != null)
             url = track.preview_url;
-
-        //Track item = mCurrentTrackItem.
-
-//        String largeImagePath;
-//        if (mCurrentTrackItem.getImage_path_large() != null)
-//            largeImagePath = mCurrentTrackItem.getImage_path_large();
-
-
         if (Utility.isConnected(getActivity().getApplicationContext())) {
             Intent startIntent = new Intent(getActivity(), MusicService.class);
             if (url != null)
@@ -552,32 +549,26 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         registerReceiver();
     }
 
-
     // progress dialogue for buffering
     private void showProgressDialog(Intent bufferIntent) {
         String bufferValue = bufferIntent.getStringExtra("buffering");
         int bufferIntValue = Integer.parseInt(bufferValue);
-
         switch (bufferIntValue) {
-
             case 0:
                 if (null != progressDialog) {
                     progressDialog.dismiss();
                 }
                 break;
-
             case 1:
                 progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_DARK);
                 progressDialog.setTitle(getResources().getString(R.string.loading_media));
                 progressDialog.show();
                 break;
-
             case 2:
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
                 break;
         }
     }
-
 
     // Set up broadcast receiver
     private BroadcastReceiver mBroadcastBufferReceiver = new BroadcastReceiver() {
@@ -588,10 +579,18 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     };
 
     // unregister broadcast receiver
+    // pass data to store
     @Override
     public void onPause() {
-        unregisterReceiver();
         super.onPause();
+        saveTracksInfo();
+        unregisterReceiver();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        unregisterReceiver();
     }
 
 
@@ -622,19 +621,9 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     public void onStopTrackingTouch(SeekBar seekBar) {
     }
 
-//    private boolean isConnected() {
-//        return isWifiConnected() || isCellularConnected();
-//    }
-//
-//    private boolean isWifiConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-//    }
-//
-//    private boolean isCellularConnected() {
-//        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-//        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
-//    }
+    @Override
+    public void onStop() {
+        super.onStop();
+
+    }
 }

@@ -2,6 +2,7 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,25 +17,36 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.inspirethis.mike.spotifystreamer.Util.Constants;
 import com.inspirethis.mike.spotifystreamer.Util.Utility;
+
+import java.util.ArrayList;
 
 /*
 * Main Activity for Spotify Streamer App
 * Instantiates ArtistSearchFragment
 */
-public class MainActivity extends Activity implements ArtistSearchFragment.Callback {
+public class MainActivity extends Activity implements ArtistSearchFragment.Callback { //, TrackPlayerActivity.TrackPlayerActivityCallback {
     private boolean mTwoPane;
     public static String COUNTRY_CODE;
     public static boolean SHOW_NOTIFICATIONS;
     private SharedPreferences mSettings;
     private static MenuItem mNowPlaying;
 
+    // used when user navigates back to player fragment
+    private ArrayList<TrackItem> mTrackItems;
+    private int mCurrentIndex;
+
+    private SharedPreferences mSharedPreferences;
+
+    SharedPreferences.Editor mEditor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //getActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (findViewById(R.id.top_ten_container) != null) {
             mTwoPane = true;
@@ -45,7 +57,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                         .commit();
             }
         } else {
-            mTwoPane = false; // this is a one pane UI for phones
+            mTwoPane = false;
         }
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
@@ -86,7 +98,6 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mNowPlaying = menu.getItem(3);
-        //mNowPlaying.setEnabled(false);
         setNowPlayingItem(false);
         return true;
 
@@ -108,15 +119,51 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                     quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
                     startService(quitIntent);
                 }
-                Log.d("", "quitting activity");
+                //Log.d("", "quitting activity");
+                clearPreferences();
+
                 this.finish();
                 return true;
             case R.id.action_nowplaying:
-                // TODO: 7/12/15 navigate back to previous fragment 
-//                Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
-//                startActivity(nowPlaying);
-                return true;
+                mSharedPreferences = getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+                if (mSharedPreferences != null) {
+                    GsonBuilder gsonb = new GsonBuilder();
+                    Gson gson = gsonb.create();
 
+                    int size = mSharedPreferences.getInt("list_size", 0);
+                    if (size != 0) {
+                        ArrayList<TrackItem> list = new ArrayList(mSharedPreferences.getInt("list_size", 0));
+                        for (int i = 0; i < size; i++) {
+                            String objectString = mSharedPreferences.getString(String.valueOf(i), "");
+                            if (!objectString.equals(""))
+                                list.add(gson.fromJson(objectString, TrackItem.class));
+                        }
+                        mTrackItems = list;
+                    }
+                }
+
+                mCurrentIndex = mSharedPreferences.getInt("current_index", 0);
+
+                //Log.d("", "tracks in MainActivity: " + mTrackItems.get(mCurrentIndex));
+
+                //Log.d("", "onClick nowPlaying button");
+                if (mTrackItems != null) {
+                    Log.d("", "onClick nowPlaying button, mTrackItems not null");
+                    //if (!mTwoPane) {
+                    // phone case
+                    Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
+                    nowPlaying.putParcelableArrayListExtra("track_items", mTrackItems);
+                    nowPlaying.putExtra("current_index", mCurrentIndex);
+                    nowPlaying.putExtra("two_pane", mTwoPane);
+                    nowPlaying.putExtra("nav_back", true);
+                    nowPlaying.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    startActivity(nowPlaying);
+                    //} else {
+                    // tablet case, MasterDetail layout
+                    //// TODO: 7/12/15 add this for tablet
+                } else
+                    Toast.makeText(getApplicationContext(), "we cant do this, sorry..", Toast.LENGTH_SHORT).show();
+                return true;
             case R.id.action_settings:
                 View checkBoxView = View.inflate(this, R.layout.checkbox, null);
                 final CheckBox checkBox = (CheckBox) checkBoxView.findViewById(R.id.checkbox);
@@ -156,6 +203,13 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                 // // TODO: 7/8/15 add shareIntent to expose the external Spotify URL for the current track
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void clearPreferences() {
+        mSharedPreferences = getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.clear();
+        editor.commit();
     }
 
     private void showCountryPickerDialog() {

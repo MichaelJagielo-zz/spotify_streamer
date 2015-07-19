@@ -3,8 +3,6 @@ package com.inspirethis.mike.spotifystreamer;
 import android.app.Fragment;
 import android.app.SearchManager;
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +14,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
+
+import com.inspirethis.mike.spotifystreamer.Util.Utility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
     }
 
     private void performSearch(String search) {
-        if (isConnected()) {
+        if (Utility.isConnected(getActivity().getApplicationContext())) {
             FetchArtistTask task = new FetchArtistTask();
             task.execute(search);
         } else
@@ -187,21 +187,5 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
             InputMethodManager inputManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
-    }
-
-    private boolean isConnected() {
-        return isWifiConnected() || isCellularConnected();
-    }
-
-    private boolean isWifiConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
-    }
-
-    private boolean isCellularConnected() {
-        ConnectivityManager connMgr = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE);
     }
 }

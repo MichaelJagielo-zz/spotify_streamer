@@ -2,6 +2,7 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,12 +29,14 @@ import java.util.ArrayList;
 * Main Activity for Spotify Streamer App
 * Instantiates ArtistSearchFragment
 */
-public class MainActivity extends Activity implements ArtistSearchFragment.Callback { //, TrackPlayerActivity.TrackPlayerActivityCallback {
+public class MainActivity extends Activity implements ArtistSearchFragment.Callback, TrackPlayerDialogFragment.ActionBarCallback { //, TrackPlayerActivity.TrackPlayerActivityCallback {
     private boolean mTwoPane;
     public static String COUNTRY_CODE;
     public static boolean SHOW_NOTIFICATIONS;
     private SharedPreferences mSettings;
     private static MenuItem mNowPlaying;
+
+    private boolean mEnabled;
 
     // used when user navigates back to player fragment
     private ArrayList<TrackItem> mTrackItems;
@@ -94,11 +97,16 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     }
 
     @Override
+    public void setEnabled(boolean bool) {
+        mEnabled = bool;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mNowPlaying = menu.getItem(3);
-        setNowPlayingItem(false);
+        mNowPlaying.setEnabled(mEnabled);
         return true;
 
     }
@@ -113,19 +121,19 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
 
         switch (item.getItemId()) {
             case R.id.action_quit:
-                //NavUtils.navigateUpFromSameTask(this); ??
+                //NavUtils.navigateUpFromSameTask(this);
                 if (MusicService.SERVICE_RUNNING) {
                     Intent quitIntent = new Intent(this, MusicService.class);
                     quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
                     startService(quitIntent);
                 }
-                //Log.d("", "quitting activity");
                 clearPreferences();
 
                 this.finish();
                 return true;
             case R.id.action_nowplaying:
                 mSharedPreferences = getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+                Log.d("", "onClick nowPlaying button, mSharedPreferences null: --------       -------------------  " + (mSharedPreferences != null) );
                 if (mSharedPreferences != null) {
                     GsonBuilder gsonb = new GsonBuilder();
                     Gson gson = gsonb.create();
@@ -144,23 +152,34 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
 
                 mCurrentIndex = mSharedPreferences.getInt("current_index", 0);
 
-                //Log.d("", "tracks in MainActivity: " + mTrackItems.get(mCurrentIndex));
-
-                //Log.d("", "onClick nowPlaying button");
                 if (mTrackItems != null) {
                     Log.d("", "onClick nowPlaying button, mTrackItems not null");
-                    //if (!mTwoPane) {
-                    // phone case
-                    Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
-                    nowPlaying.putParcelableArrayListExtra("track_items", mTrackItems);
-                    nowPlaying.putExtra("current_index", mCurrentIndex);
-                    nowPlaying.putExtra("two_pane", mTwoPane);
-                    nowPlaying.putExtra("nav_back", true);
-                    nowPlaying.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                    startActivity(nowPlaying);
-                    //} else {
-                    // tablet case, MasterDetail layout
-                    //// TODO: 7/12/15 add this for tablet
+
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelableArrayList("track_items", mTrackItems);
+                    bundle.putInt("current_index", mCurrentIndex);
+                    bundle.putBoolean("two_pane", mTwoPane);
+                    bundle.putBoolean("nav_back", true);
+
+                    if (!mTwoPane) {
+                        // phone case
+                        Intent nowPlaying = new Intent(this, TrackPlayerActivity.class);
+                        nowPlaying.putExtras(bundle);
+                        nowPlaying.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                        startActivity(nowPlaying);
+                    } else {
+                        // tablet case, MasterDetail layout
+                        TrackPlayerDialogFragment trackPlayerFragment = (TrackPlayerDialogFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
+                        if (trackPlayerFragment == null) {
+                            final FragmentTransaction ft = getFragmentManager().beginTransaction();
+                            trackPlayerFragment = new TrackPlayerDialogFragment();
+                            trackPlayerFragment.setArguments(bundle);
+                            ft.replace(R.id.two_pane_layout, trackPlayerFragment, "trackPlayerFragmentOverlay");
+                            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                            ft.addToBackStack(null);
+                            ft.commit();
+                        }
+                    }
                 } else
                     Toast.makeText(getApplicationContext(), "we cant do this, sorry..", Toast.LENGTH_SHORT).show();
                 return true;
@@ -202,7 +221,11 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
             case R.id.action_sharetrack:
                 // // TODO: 7/8/15 add shareIntent to expose the external Spotify URL for the current track
         }
-        return super.onOptionsItemSelected(item);
+
+        return super.
+
+                onOptionsItemSelected(item);
+
     }
 
     private void clearPreferences() {

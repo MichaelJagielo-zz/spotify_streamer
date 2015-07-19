@@ -57,10 +57,10 @@ public class TopTenSearchFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState == null || !savedInstanceState.containsKey("track_items")) {
+        if (savedInstanceState == null || !savedInstanceState.containsKey("track items")) {
             mTrackItems = new ArrayList<>();
         } else {
-            mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
+            mTrackItems = savedInstanceState.getParcelableArrayList("track items");
         }
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
@@ -79,8 +79,8 @@ public class TopTenSearchFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (mTrackItems != null) {
-            outState.putParcelableArrayList("track_items", mTrackItems);
-            outState.putInt("current_index", mCurrentIndex);
+            outState.putParcelableArrayList("track items", mTrackItems);
+            outState.putInt("index", mCurrentIndex);
         }
 
         super.onSaveInstanceState(outState);
@@ -120,7 +120,7 @@ public class TopTenSearchFragment extends Fragment {
                         trackPlayerFragment.setArguments(bundle);
                         ft.replace(R.id.two_pane_layout, trackPlayerFragment, "trackPlayerFragmentOverlay");
                         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                        ft.disallowAddToBackStack();
+                        ft.addToBackStack(null);
                         ft.commit();
                     }
                 } else {
@@ -133,6 +133,7 @@ public class TopTenSearchFragment extends Fragment {
         });
         return rootView;
     }
+
 
     private void fetchTopTen(String id) {
 Log.d("", " in fetchTopTen: id: " + id);
@@ -197,4 +198,5 @@ Log.d("", " in fetchTopTen: id: " + id);
         });
 
     }
+
 }

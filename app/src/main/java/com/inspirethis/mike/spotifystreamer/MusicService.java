@@ -162,7 +162,6 @@ public class MusicService extends Service implements OnCompletionListener,
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
             Log.d(LOG_TAG, "action Play");
             // start new track
-            //if (intent.getExtras().getString("sentAudioLink") != null)
                 mURL = intent.getExtras().getString("sentAudioLink");
             mMediaPosition = 0;
             if (mURL != null)
@@ -279,11 +278,11 @@ public class MusicService extends Service implements OnCompletionListener,
     };
 
     private void logMediaPosition(String state) {
-
-        Log.d(LOG_TAG, "** ** method: logMediaPosition: state:" + state);
-        Log.d(LOG_TAG, "** ** method: logMediaPosition: mMediaPlayer.isPlaying():" + mMediaPlayer.isPlaying());
-        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaPosition)):" + String.valueOf(mMediaPosition));
-        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaMax)):" + String.valueOf(mMediaMax));
+//
+//        Log.d(LOG_TAG, "** ** method: logMediaPosition: state:" + state);
+//        Log.d(LOG_TAG, "** ** method: logMediaPosition: mMediaPlayer.isPlaying():" + mMediaPlayer.isPlaying());
+//        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaPosition)):" + String.valueOf(mMediaPosition));
+//        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaMax)):" + String.valueOf(mMediaMax));
 
         if (mMediaPlayer.isPlaying() && state.equals(TRACK_RUNNING)) {
             mMediaPosition = mMediaPlayer.getCurrentPosition();

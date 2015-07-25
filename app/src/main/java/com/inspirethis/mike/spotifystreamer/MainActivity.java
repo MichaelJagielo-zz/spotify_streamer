@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,6 +36,11 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     public static boolean SHOW_NOTIFICATIONS;
     private SharedPreferences mSettings;
     private static MenuItem mNowPlaying;
+    private CheckBox mDontShowAgain;
+
+//    // Progress dialogue and broadcast receiver variables
+//    boolean mBufferBroadcastIsRegistered;
+//    private ProgressDialog pdBuff = null;
 
     private boolean mEnabled;
 
@@ -115,6 +121,13 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
         mNowPlaying.setEnabled(bool);
     }
 
+    private void quitService() {
+        if (MusicService.SERVICE_RUNNING) {
+            Intent quitIntent = new Intent(this, MusicService.class);
+            quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+            startService(quitIntent);
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d("", "onOptionsItemsSelected: item " + item.toString() + "  " + item.getItemId());
@@ -122,11 +135,12 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
         switch (item.getItemId()) {
             case R.id.action_quit:
                 //NavUtils.navigateUpFromSameTask(this);
-                if (MusicService.SERVICE_RUNNING) {
-                    Intent quitIntent = new Intent(this, MusicService.class);
-                    quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
-                    startService(quitIntent);
-                }
+                quitService();
+//                if (MusicService.SERVICE_RUNNING) {
+//                    Intent quitIntent = new Intent(this, MusicService.class);
+//                    quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+//                    startService(quitIntent);
+//                }
                 clearPreferences();
 
                 this.finish();
@@ -258,4 +272,52 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
         alert.show();
     }
 
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder adb = new AlertDialog.Builder(this);
+        LayoutInflater adbInflater = LayoutInflater.from(this);
+        View checkBoxView = adbInflater.inflate(R.layout.alert_checkbox, null);
+        mDontShowAgain = (CheckBox) checkBoxView.findViewById(R.id.skip);
+        adb.setView(checkBoxView);
+        adb.setTitle(getResources().getString(R.string.attention));
+        adb.setMessage(getResources().getString(R.string.sure_exit));
+        mDontShowAgain.setText(getResources().getString(R.string.dont_show_again));
+        adb.setPositiveButton(getResources().getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int which) {
+                Boolean checked = false;
+                if (mDontShowAgain.isChecked())
+                    checked = true;
+                // remove values saved for showing the NowPLaying button
+                clearPreferences();
+
+                SharedPreferences.Editor editor = mSettings.edit();
+                editor.putBoolean("boolKeyExit", checked);
+                editor.commit();
+
+                quitService();
+                MainActivity.this.finish();
+                return;
+            }
+        });
+        adb.setNegativeButton(getResources().getString(R.string.no), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                Boolean checked = false;
+                if (mDontShowAgain.isChecked())
+                    checked = true;
+                SharedPreferences.Editor editor = mSettings.edit();
+                editor.putBoolean("boolKeyExit", checked);
+                editor.commit();
+                return;
+            }
+        });
+
+        Boolean bool = mSettings.getBoolean("boolKeyExit", false);
+        if (!bool)
+            adb.show();
+        else {
+            quitService();
+            MainActivity.this.finish();
+        }
+    }
 }

@@ -14,6 +14,7 @@ public class TrackPlayerActivity extends FragmentActivity {
     private boolean mTwoPane;
     private boolean mNavBack;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,10 +23,7 @@ public class TrackPlayerActivity extends FragmentActivity {
         if (savedInstanceState != null) {
             mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
             mCurrentIndex = savedInstanceState.getInt("current_index");
-
         } else {
-
-
             Bundle extras = getIntent().getExtras();
             mNavBack = extras.getBoolean("nav_back");
             mTwoPane = extras.getBoolean("two_pane");
@@ -36,7 +34,6 @@ public class TrackPlayerActivity extends FragmentActivity {
             bundle.putInt("current_index", index);
             bundle.putParcelableArrayList("track_items", list);
             bundle.putBoolean("nav_back", mNavBack);
-
 
             if (!mTwoPane) {
                 // instantiate fragment for phone
@@ -57,22 +54,6 @@ public class TrackPlayerActivity extends FragmentActivity {
         getMenuInflater().inflate(R.menu.menu_track_player, menu);
         return true;
     }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {

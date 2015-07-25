@@ -31,4 +31,9 @@
     <string name="select_country_code">Select Country Code</string>
     <string name="no_tracks_found">No Tracks Found</string>
     <string name="error_top_ten_search">Error searching for top ten tracks</string>
+    <string name="attention">Attention</string>
+    <string name="sure_exit">Are you sure that you would like to exit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="dont_show_again">Don\'t show again</string>
 </resources>

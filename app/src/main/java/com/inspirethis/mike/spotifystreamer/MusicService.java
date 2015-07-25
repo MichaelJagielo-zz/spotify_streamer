@@ -47,6 +47,7 @@ public class MusicService extends Service implements OnCompletionListener,
     private TelephonyManager mTelephonyManager;
     public static boolean SERVICE_RUNNING;
     public static boolean TRACK_PLAYING;
+    public static boolean TRACK_PAUSED;
 
     // seekBar variables
     int mMediaPosition;
@@ -94,7 +95,8 @@ public class MusicService extends Service implements OnCompletionListener,
         mHeadsetReceiverRegistered = true;
 
         songEnded = 0;
-        TRACK_PLAYING = false;
+        TRACK_PLAYING = false;  // TODO: these arent needed
+        TRACK_PAUSED = false;
     }
 
     @Override
@@ -177,16 +179,18 @@ public class MusicService extends Service implements OnCompletionListener,
             // pause player
             mMediaPlayer.pause();
             TRACK_PLAYING = false;
+            TRACK_PAUSED = true;
 
         } else if (intent.getAction().equals(Constants.ACTION.RESUME_ACTION)) {
             Log.i(LOG_TAG, "action resume");
             // resume player
             mMediaPlayer.start();
             TRACK_PLAYING = true;
+            TRACK_PAUSED = false;
 
         } else if (intent.getAction().equals(Constants.ACTION.STOPFOREGROUND_ACTION)) {
             Log.i(LOG_TAG, "Received Stop Foreground Intent");
-            TRACK_PLAYING = false; // // TODO: 7/2/15 not needed as service is being shut down..? 
+            //TRACK_PLAYING = false;
             stopForeground(true);
             stopSelf();
         }
@@ -201,12 +205,13 @@ public class MusicService extends Service implements OnCompletionListener,
             mMediaPlayer.setDataSource(url);
 
             // Send message to Activity to display progress dialogue
-            //sendBufferingBroadcast();
+            sendBufferingBroadcast();
             // Prepare MediaPlayer
             mMediaPlayer.prepare();
             mMediaPlayer.start();
 
             TRACK_PLAYING = true;
+            TRACK_PAUSED = false;
 
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -278,30 +283,18 @@ public class MusicService extends Service implements OnCompletionListener,
     };
 
     private void logMediaPosition(String state) {
-//
-//        Log.d(LOG_TAG, "** ** method: logMediaPosition: state:" + state);
-//        Log.d(LOG_TAG, "** ** method: logMediaPosition: mMediaPlayer.isPlaying():" + mMediaPlayer.isPlaying());
-//        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaPosition)):" + String.valueOf(mMediaPosition));
-//        Log.d(LOG_TAG, "** ** method: logMediaPosition: String.valueOf(mMediaMax)):" + String.valueOf(mMediaMax));
-
         if (mMediaPlayer.isPlaying() && state.equals(TRACK_RUNNING)) {
             mMediaPosition = mMediaPlayer.getCurrentPosition();
             mMediaMax = mMediaPlayer.getDuration();
-
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaPosition));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
-            Log.d(LOG_TAG, "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         } else if (state.equals(TRACK_COMPLETED)) {
-
             // report track completed to TrackPlayerFragment
-            Log.d(LOG_TAG, "method: logMediaPosition: state:" + state + " ** ** ** flipped songEnded boolean in onCompletion: " + songEnded);
-
             mSeekIntent.putExtra("totalDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("currentDuration", String.valueOf(mMediaMax));
             mSeekIntent.putExtra("song_ended", String.valueOf(songEnded));
-            Log.d(LOG_TAG, "sending broadcast from logMediaPosition: song_ended: " + String.valueOf(songEnded));
             sendBroadcast(mSeekIntent);
         }
     }

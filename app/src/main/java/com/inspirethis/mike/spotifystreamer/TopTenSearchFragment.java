@@ -135,6 +135,8 @@ public class TopTenSearchFragment extends Fragment {
     }
 
 
+
+
     private void fetchTopTen(String id) {
 Log.d("", " in fetchTopTen: id: " + id);
         Map<String, Object> queryMap = new HashMap<>();

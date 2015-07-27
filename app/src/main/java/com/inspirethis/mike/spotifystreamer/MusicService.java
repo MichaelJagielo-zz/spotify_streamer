@@ -1,8 +1,6 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,8 +16,6 @@ import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -43,18 +39,20 @@ public class MusicService extends Service implements OnCompletionListener,
     private String mURL;
     private static final int NOTIFICATION_ID = 1;
     private boolean bIsPausedInCall = false;
-    private PhoneStateListener mPhoneStateListener;
-    private TelephonyManager mTelephonyManager;
+//    private PhoneStateListener mPhoneStateListener;
+//    private TelephonyManager mTelephonyManager;
     public static boolean SERVICE_RUNNING;
     public static boolean TRACK_PLAYING;
     public static boolean TRACK_PAUSED;
+    // field for notification ID
+    private static final int NOTIF_ID = 0;
 
     // seekBar variables
     int mMediaPosition;
     int mMediaMax;
 
     private boolean mBroadcastReceiverRegistered;
-    private boolean mHeadsetReceiverRegistered;
+   // private boolean mHeadsetReceiverRegistered;
 
 
     private final Handler mHandler = new Handler();
@@ -70,13 +68,13 @@ public class MusicService extends Service implements OnCompletionListener,
     Intent mBufferIntent;
     Intent mSeekIntent;
 
-    private int mHeadsetSwitch = 1;
+ //   private int mHeadsetSwitch = 1;
 
     @Override
     public void onCreate() {
         Log.d(LOG_TAG, "Creating MusicService");
         mBroadcastReceiverRegistered = false;
-        mHeadsetReceiverRegistered = false;
+        //mHeadsetReceiverRegistered = false;
 
         mBufferIntent = new Intent(BROADCAST_BUFFER);
 
@@ -90,9 +88,9 @@ public class MusicService extends Service implements OnCompletionListener,
         mMediaPlayer.reset();
 
         // Register headset receiver
-        registerReceiver(headsetReceiver, new IntentFilter(
-                Intent.ACTION_HEADSET_PLUG));
-        mHeadsetReceiverRegistered = true;
+//        registerReceiver(headsetReceiver, new IntentFilter(
+//                Intent.ACTION_HEADSET_PLUG));
+//        //mHeadsetReceiverRegistered = true;
 
         songEnded = 0;
         TRACK_PLAYING = false;  // TODO: these arent needed
@@ -112,51 +110,53 @@ public class MusicService extends Service implements OnCompletionListener,
             notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                     | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
-                    notificationIntent, 0);
+//            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0,
+//                    notificationIntent, 0);
 
-            Intent previousIntent = new Intent(context, MusicService.class);
-            previousIntent.setAction(Constants.ACTION.PREV_ACTION);
-            PendingIntent ppreviousIntent = PendingIntent.getService(this, 0,
-                    previousIntent, 0);
-
-            Intent playIntent = new Intent(context, MusicService.class);
-            playIntent.setAction(Constants.ACTION.PLAY_ACTION);
-            PendingIntent pplayIntent = PendingIntent.getService(this, 0,
-                    playIntent, 0);
-
-            Intent nextIntent = new Intent(context, MusicService.class);
-            nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
-            PendingIntent pnextIntent = PendingIntent.getService(this, 0,
-                    nextIntent, 0);
+//            Intent previousIntent = new Intent(context, MusicService.class);
+//            previousIntent.setAction(Constants.ACTION.PREV_ACTION);
+//            PendingIntent ppreviousIntent = PendingIntent.getService(this, 0,
+//                    previousIntent, 0);
+//
+//            Intent playIntent = new Intent(context, MusicService.class);
+//            playIntent.setAction(Constants.ACTION.PLAY_ACTION);
+//            PendingIntent pplayIntent = PendingIntent.getService(this, 0,
+//                    playIntent, 0);
+//
+//            Intent nextIntent = new Intent(context, MusicService.class);
+//            nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
+//            PendingIntent pnextIntent = PendingIntent.getService(this, 0,
+//                    nextIntent, 0);
 
             setUp(); // set up listeners, register receivers
 
 
-            int icon = R.mipmap.greyscale_thumb;
-            CharSequence tickerText = getResources().getString(R.string.ticket_text);
+//            int icon = R.mipmap.greyscale_thumb;
+//            CharSequence tickerText = getResources().getString(R.string.ticket_text);
+//
+//            CharSequence contentTitle = getResources().getString(R.string.streamer);
+//            CharSequence contentText = getResources().getString(R.string.content_text);
 
-            CharSequence contentTitle = getResources().getString(R.string.streamer);
-            CharSequence contentText = getResources().getString(R.string.content_text);
+            Notification notification = new NotificationCompat.Builder(context).build();
+//                    .setAutoCancel(true)
+//                    .setContentTitle(contentTitle)
+//                    .setTicker(tickerText)
+//                    .setContentText(contentText)
+//                    .setSmallIcon(icon)
+////                    .setLargeIcon(
+////                            Bitmap.createScaledBitmap(icon, 128, 128, false))
+//                    .setContentIntent(pendingIntent).build();
+                    //.setOngoing(true)
+//                    .addAction(android.R.drawable.ic_media_previous,
+//                            "Prev", ppreviousIntent)
+//                    .addAction(android.R.drawable.ic_media_play, "Play",
+//                            pplayIntent)
+//                    .addAction(android.R.drawable.ic_media_next, "Next",
+//                            pnextIntent).build();
 
-            Notification notification = new NotificationCompat.Builder(context)
-                    .setContentTitle(contentTitle)
-                    .setTicker(tickerText)
-                    .setContentText(contentText)
-                    .setSmallIcon(icon)
-//                    .setLargeIcon(     // TODO: 6/30/15 set large icon with track image, passed by intent.
-//                            Bitmap.createScaledBitmap(icon, 128, 128, false))
-                    .setContentIntent(pendingIntent)
-                    .setOngoing(true)
-                    .addAction(android.R.drawable.ic_media_previous,
-                            "Prev", ppreviousIntent)
-                    .addAction(android.R.drawable.ic_media_play, "Play", // TODO: 6/30/15 add these strings
-                            pplayIntent)
-                    .addAction(android.R.drawable.ic_media_next, "Next",
-                            pnextIntent).build();
-
-            startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,
-                    notification);
+//            startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE,
+//                    notification);
+            startForeground(NOTIF_ID, notification);
 
             // seekBar handler
             setupHandler();
@@ -232,41 +232,41 @@ public class MusicService extends Service implements OnCompletionListener,
         // Pause MediaPlayer on incoming calls, resume on hangup.
 
         // instantiate telephony manager
-        Log.d(LOG_TAG, "Starting TELEPHONY_SERVICE");
-        mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        //Log.d(LOG_TAG, "Starting TELEPHONY_SERVICE");
+        //mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
 
-        Log.d(LOG_TAG, "Starting PhoneStateListener");
-        mPhoneStateListener = new PhoneStateListener() {
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
+//        Log.d(LOG_TAG, "Starting PhoneStateListener");
+//        mPhoneStateListener = new PhoneStateListener() {
+//            @Override
+//            public void onCallStateChanged(int state, String incomingNumber) {
+//
+//                Log.d(LOG_TAG, "Starting CallStateChange");
+//                switch (state) {
+//                    case TelephonyManager.CALL_STATE_OFFHOOK:
+//                    case TelephonyManager.CALL_STATE_RINGING:
+//                        if (mMediaPlayer != null) {
+//                            pauseMedia();
+//                            bIsPausedInCall = true;
+//                        }
+//
+//                        break;
+//                    case TelephonyManager.CALL_STATE_IDLE:
+//                        // Phone idle state, start MediaPlayer
+//                        if (mMediaPlayer != null) {
+//                            if (bIsPausedInCall) {
+//                                bIsPausedInCall = false;
+//                                playMedia();
+//                            }
+//                        }
+//                        break;
+//                }
+//            }
+//        };
 
-                Log.d(LOG_TAG, "Starting CallStateChange");
-                switch (state) {
-                    case TelephonyManager.CALL_STATE_OFFHOOK:
-                    case TelephonyManager.CALL_STATE_RINGING:
-                        if (mMediaPlayer != null) {
-                            pauseMedia();
-                            bIsPausedInCall = true;
-                        }
-
-                        break;
-                    case TelephonyManager.CALL_STATE_IDLE:
-                        // Phone idle state, start MediaPlayer
-                        if (mMediaPlayer != null) {
-                            if (bIsPausedInCall) {
-                                bIsPausedInCall = false;
-                                playMedia();
-                            }
-                        }
-                        break;
-                }
-            }
-        };
-
-        // Register the listener with the telephony manager
-        mTelephonyManager.listen(mPhoneStateListener,
-                PhoneStateListener.LISTEN_CALL_STATE);
+//        // Register the listener with the telephony manager
+//        mTelephonyManager.listen(mPhoneStateListener,
+//                PhoneStateListener.LISTEN_CALL_STATE);
     }
 
     // seekBar info to activity
@@ -317,31 +317,31 @@ public class MusicService extends Service implements OnCompletionListener,
         }
     }
 
-    // If headset gets unplugged, stop music and service.
-    private BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
-        private boolean headsetConnected = false;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra("state")) {
-                if (headsetConnected && intent.getIntExtra("state", 0) == 0) {
-                    headsetConnected = false;
-                    mHeadsetSwitch = 0;
-                } else if (!headsetConnected
-                        && intent.getIntExtra("state", 0) == 1) {
-                    headsetConnected = true;
-                    mHeadsetSwitch = 1;
-                }
-            }
-            switch (mHeadsetSwitch) {
-                case (0):
-                    headsetDisconnected();
-                    break;
-                case (1):
-                    break;
-            }
-        }
-    };
+//    // If headset gets unplugged, stop music and service.
+//    private BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
+//        private boolean headsetConnected = false;
+//
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            if (intent.hasExtra("state")) {
+//                if (headsetConnected && intent.getIntExtra("state", 0) == 0) {
+//                    headsetConnected = false;
+//                    mHeadsetSwitch = 0;
+//                } else if (!headsetConnected
+//                        && intent.getIntExtra("state", 0) == 1) {
+//                    headsetConnected = true;
+//                    mHeadsetSwitch = 1;
+//                }
+//            }
+//            switch (mHeadsetSwitch) {
+//                case (0):
+//                    headsetDisconnected();
+//                    break;
+//                case (1):
+//                    break;
+//            }
+//        }
+//    };
 
     private void headsetDisconnected() {
         stopMedia();
@@ -361,17 +361,17 @@ public class MusicService extends Service implements OnCompletionListener,
             mMediaPlayer.release();
         }
 
-        if (mPhoneStateListener != null) {
-            mTelephonyManager.listen(mPhoneStateListener,
-                    PhoneStateListener.LISTEN_NONE);
-        }
+//        if (mPhoneStateListener != null) {
+//            mTelephonyManager.listen(mPhoneStateListener,
+//                    PhoneStateListener.LISTEN_NONE);
+//        }
 
         // Cancel the notification
-        cancelNotification();
+        //cancelNotification();
 
-        if (mHeadsetReceiverRegistered)
-            // Unregister headsetReceiver
-            unregisterReceiver(headsetReceiver);
+//        if (mHeadsetReceiverRegistered)
+//            // Unregister headsetReceiver
+//            unregisterReceiver(headsetReceiver);
 
         if (mBroadcastReceiverRegistered)
             // Unregister seekbar receiver
@@ -473,13 +473,13 @@ public class MusicService extends Service implements OnCompletionListener,
         }
     }
 
-    // for Telephony Manager
-    public void pauseMedia() {
-        Log.d(LOG_TAG, "Pause Media");
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-        }
-    }
+//    // for Telephony Manager
+//    public void pauseMedia() {
+//        Log.d(LOG_TAG, "Pause Media");
+//        if (mMediaPlayer.isPlaying()) {
+//            mMediaPlayer.pause();
+//        }
+//    }
 
     public void stopMedia() {
         if (mMediaPlayer.isPlaying()) {
@@ -550,10 +550,10 @@ public class MusicService extends Service implements OnCompletionListener,
 //
 //    }
 
-    // Cancel Notification
-    private void cancelNotification() {
-        String ns = Context.NOTIFICATION_SERVICE;
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
-        mNotificationManager.cancel(NOTIFICATION_ID);
-    }
+//    // Cancel Notification
+//    private void cancelNotification() {
+//        String ns = Context.NOTIFICATION_SERVICE;
+//        NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+//        mNotificationManager.cancel(NOTIFICATION_ID);
+//    }
 }

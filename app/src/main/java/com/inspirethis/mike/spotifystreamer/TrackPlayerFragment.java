@@ -10,8 +10,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -50,16 +48,6 @@ import retrofit.RetrofitError;
  */
 public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeListener {
 
-    private TrackItem mTrackItem;
-    private TrackItem mCurrentTrackItem;
-    private Track mTrack;
-    private int mCurrentIndex;
-    private ArrayList<TrackItem> mTrackItems;
-
-    // for keeping track of when user navigates back from MainActivity through "Now Playing" button
-    private boolean mNavBack;
-    private boolean mPaused;
-
     @InjectView(R.id.tvArtistName)
     TextView artist_name;
 
@@ -90,10 +78,18 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @InjectView(R.id.tvFinalTime)
     TextView tvFinalTime;
 
-    Intent mServiceIntent;
 
-    TelephonyManager telephonyManager;
-    PhoneStateListener listener;
+    private TrackItem mTrackItem;
+    private TrackItem mCurrentTrackItem;
+    private Track mTrack;
+    private int mCurrentIndex;
+    private ArrayList<TrackItem> mTrackItems;
+
+    // for keeping track of when user navigates back from MainActivity through "Now Playing" button
+    private boolean mNavBack;
+    private boolean mPaused;
+
+    Intent mServiceIntent;
 
     private static int mTrackEndedFlag = 0;
     boolean mBroadcastIsRegistered;
@@ -111,12 +107,13 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private int mCurrentPosition;
     private String mCurrentTime;
     private String mFinalTime;
+    private boolean mEnabled;
 
     private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
     public TrackPlayerFragment() {
     }
-    
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -134,23 +131,21 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                     FetchTrackTask task = new FetchTrackTask();
                     task.execute(mCurrentTrackItem.getSpotifyId());
                 } else if (mNavBack) {
-                    if (!MusicService.TRACK_PLAYING) {
-                        playTrack(null, Constants.ACTION.RESUME_ACTION);
-                    }
-
-                    if (MusicService.songEnded == 1) {
-                        FetchTrackTask task = new FetchTrackTask();
-                        task.execute(mCurrentTrackItem.getSpotifyId());
-                    }
-
                     if (mCurrentTrackItem == null)
                         Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
 
+                    else if (!MusicService.TRACK_PLAYING) {
+                        playTrack(null, Constants.ACTION.RESUME_ACTION);
+
+                    } else if (MusicService.songEnded == 1) {
+                        FetchTrackTask task = new FetchTrackTask();
+                        task.execute(mCurrentTrackItem.getSpotifyId());
+                    }
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
                 }
             }
-            // subsequent run, get last settings
+            // subsequent run, get last settings, device was rotated
         } else {
             mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
             mCurrentIndex = savedInstanceState.getInt("current_index");
@@ -161,20 +156,27 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             mFinalTime = savedInstanceState.getString("final_time");
             mPaused = savedInstanceState.getBoolean("paused");
             mNavBack = savedInstanceState.getBoolean("nav_back");
+            mEnabled = savedInstanceState.getBoolean("enabled");
 
             // if Now Playing button was clicked
             SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
             if (prefs != null) {
+                mNavBack = true;
                 // get saved track data
                 mCurrentPosition = prefs.getInt("current_position", 0);
                 mCurrentTime = prefs.getString("current_time", "");
                 mFinalTime = prefs.getString("final_time", "");
+                if (!MusicService.TRACK_PLAYING) {
+                    playTrack(null, Constants.ACTION.RESUME_ACTION);
+                }
+
             }
 
             if (mCurrentTrackItem == null)
                 Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
         }
         registerBufferReceiver();
+        registerReceiver();
     }
 
     @Override
@@ -189,7 +191,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         switch (item.getItemId()) {
             case 0:
                 if (MusicService.SERVICE_RUNNING) {
-                    unregisterReceivers();
                     Intent quitIntent = new Intent(getActivity(), MusicService.class);
                     quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
                     getActivity().startService(quitIntent);
@@ -339,8 +340,12 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             e.putInt("list_size", mTrackItems.size());
             e.putInt("current_index", mCurrentIndex);
             e.putInt("current_position", mSeekBar.getProgress());
+            e.putInt("max_position", mSeekBar.getMax());
             e.putString("current_time", tvCurrentTime.getText().toString());
             e.putString("final_time", tvFinalTime.getText().toString());
+            e.putBoolean("paused", !MusicService.TRACK_PLAYING);
+            e.putBoolean("nav_back", mNavBack);
+            e.putBoolean("enabled", mEnabled);
             e.commit();
         }
     }
@@ -355,9 +360,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         outState.putString("current_time", tvCurrentTime.getText().toString());
         outState.putString("final_time", tvFinalTime.getText().toString());
         outState.putBoolean("paused", !MusicService.TRACK_PLAYING);
-        outState.putBoolean("nav_back",mNavBack);
-
-        unregisterReceivers();
+        outState.putBoolean("nav_back", mNavBack);
+        outState.putBoolean("enabled", mEnabled);
     }
 
 
@@ -397,7 +401,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         } else if (mPaused) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             mSeekBar.setMax(mMaxPosition);
-            mSeekBar.setProgress(mSavedPosition/1000);
+            mSeekBar.setProgress(mSavedPosition / 1000);
             tvFinalTime.setText(mFinalTime);
             tvCurrentTime.setText(mCurrentTime);
         }
@@ -413,11 +417,11 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             // seekBarIntent for broadcasting new position to service
             seekBarIntent = new Intent(BROADCAST_SEEKBAR);
             mSeekBar.setOnSeekBarChangeListener(this);
-            startProgressDialog();
+            //startProgressDialog();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        mNavBack = false;
+        mNavBack = false; // reset the flag
         return rootView;
     }
 
@@ -456,7 +460,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 }
                 MainActivity.setNowPlayingItem(true);
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
-
+                mEnabled = true;
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
             }
@@ -505,27 +509,37 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(LOG_TAG, "onDestroyView: mEnabled: " + mEnabled + "  ------------------ ----------------- ------------------ ** ");
+        unregisterReceivers();
+    }
+
 
     private void unregisterReceivers() {
         // unregister mBroadcastReceiver for seekBar
-        if (mBroadcastIsRegistered) {
-            try {
-                getActivity().unregisterReceiver(mBroadcastReceiver);
-                mBroadcastIsRegistered = false;
-            } catch (Exception e) {
-                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
-                e.printStackTrace();
-            }
+
+        //if (mBroadcastReceiver != null && mBroadcastIsRegistered) {
+
+        //if (MusicService.mBroadcastReceiverRegistered) {
+        try {
+            getActivity().unregisterReceiver(mBroadcastReceiver);
+            mBroadcastIsRegistered = false;
+        } catch (Exception e) {
+            Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
+            e.printStackTrace();
         }
-        if (mBufferBroadcastIsRegistered) {
-            try {
-                getActivity().unregisterReceiver(mBroadcastBufferReceiver);
-                mBufferBroadcastIsRegistered = false;
-            } catch (Exception e) {
-                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
-                e.printStackTrace();
-            }
+        // }
+        //if (mBroadcastBufferReceiver != null && mBufferBroadcastIsRegistered) {
+        try {
+            getActivity().unregisterReceiver(mBroadcastBufferReceiver);
+            mBufferBroadcastIsRegistered = false;
+        } catch (Exception e) {
+            Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
+            e.printStackTrace();
         }
+        // }
     }
 
     private void initService() {
@@ -535,7 +549,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
 
-            registerReceiver();
+            //registerReceiver();
 
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
@@ -556,7 +570,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             startIntent.putExtra("largeImagePath", mCurrentTrackItem.getImage_path_large());
             startIntent.setAction(action);
             getActivity().startService(startIntent);
-
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
                     getResources().getString(R.string.network_connection_needed),
@@ -610,20 +623,18 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     public void onPause() {
         super.onPause();
         saveTracksInfo();
-        unregisterReceivers();
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
+    public void onDestroy() {
+        super.onDestroy();
         unregisterReceivers();
     }
-
 
     // register broadcast receiver
     @Override
     public void onResume() {
-        registerReceiver();
+        //registerReceiver();
         super.onResume();
     }
 

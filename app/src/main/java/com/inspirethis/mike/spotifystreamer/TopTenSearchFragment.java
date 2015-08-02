@@ -103,7 +103,7 @@ public class TopTenSearchFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
                 mCurrentIndex = position;
-                TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);
+                //TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);//// TODO: 8/2/15 remove
 
                 Bundle bundle = new Bundle();
                 bundle.putInt("current_index", mCurrentIndex);
@@ -111,7 +111,6 @@ public class TopTenSearchFragment extends Fragment {
 
 
                 if (getActivity().findViewById(R.id.track_player_container) != null) {
-                    //mTwoPane = true;
                     // adding DialogFragment for view overlay on two pane view
                     TrackPlayerDialogFragment trackPlayerFragment = (TrackPlayerDialogFragment) getFragmentManager().findFragmentById(R.id.track_player_container);
                     if (trackPlayerFragment == null) {
@@ -124,8 +123,6 @@ public class TopTenSearchFragment extends Fragment {
                         ft.commit();
                     }
                 } else {
-                    //mTwoPane = false;
-
                     Intent trackPlayer = new Intent(getActivity(), TrackPlayerActivity.class).putExtras(bundle);
                     startActivity(trackPlayer);
                 }
@@ -178,7 +175,6 @@ Log.d("", " in fetchTopTen: id: " + id);
                                     if (url_large_image.equals(""))
                                         url_large_image = t.album.images.get(0).url;
                                     mTrackItems.add(new TrackItem(t.id, mArtist, t.album.name, t.name, url_small_image, url_large_image));
-                                    Log.d("", "mTrackItems size: " + mTrackItems.size());
                                 }
                             }
                         }

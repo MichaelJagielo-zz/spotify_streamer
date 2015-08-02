@@ -46,8 +46,8 @@ public class MusicService extends Service implements OnCompletionListener,
     private static final int NOTIF_ID = 0;
 
     // seekBar variables
-    int mMediaPosition;
-    int mMediaMax;
+    private int mMediaPosition;
+    private int mMediaMax;
 
     private boolean mBroadcastReceiverRegistered;
 

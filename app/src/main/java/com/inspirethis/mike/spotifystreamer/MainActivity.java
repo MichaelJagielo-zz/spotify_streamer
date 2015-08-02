@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -33,7 +32,6 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     public static String COUNTRY_CODE;
     private SharedPreferences mSettings;
     private MenuItem mNowPlaying;
-    private CheckBox mDontShowAgain;
     private TrackPlayerDialogFragment mTrackPlayerDialogFragment;
 
     // used when user navigates back to player fragment

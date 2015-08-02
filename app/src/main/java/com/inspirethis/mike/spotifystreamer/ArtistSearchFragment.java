@@ -37,8 +37,8 @@ public class ArtistSearchFragment extends Fragment implements SearchView.OnQuery
 
     private ArtistListViewAdapter mMusicListAdapter;
     private ArrayList<ArtistItem> artistItems;
-    SearchView searchView;
-    SearchManager searchManager;
+    private SearchView searchView;
+    private SearchManager searchManager;
 
 
     public interface Callback {

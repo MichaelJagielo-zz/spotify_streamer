@@ -461,7 +461,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
-    private String milliSecondsToTimer(long milliseconds) {
+    private String milliSecondsToTimer(long milliseconds) { // // TODO: 7/27/15 move to util class
         String finalTimerString = "";
         String secondsString = "";
 
@@ -542,6 +542,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             Intent startIntent = new Intent(getActivity(), MusicService.class);
             if (url != null)
                 startIntent.putExtra("sentAudioLink", url);
+
+
             startIntent.setAction(action);
             getActivity().startService(startIntent);
         } else {
@@ -607,6 +609,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     // register broadcast receiver
     @Override
     public void onResume() {
+        //registerReceiver();
         super.onResume();
     }
 

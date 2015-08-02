@@ -45,7 +45,6 @@ import retrofit.RetrofitError;
  *
  */
 public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar.OnSeekBarChangeListener {
-    private TrackItem mTrackItem;
     private TrackItem mCurrentTrackItem;
     private Track mTrack;
     private int mCurrentIndex;
@@ -90,10 +89,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     private String mCurrentTime;
     private String mFinalTime;
 
-    //private View mView;
-
     private static int mTrackEndedFlag = 0;
-    boolean mBroadcastIsRegistered;
 
     // constant for broadcast of seekBar position
     public static final String BROADCAST_SEEKBAR = "com.inspirethis.mike.spotifystreamer.sendseekbar";
@@ -101,7 +97,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     Intent mServiceIntent;
 
     // Progress dialogue and broadcast receiver variables
-    boolean mBufferBroadcastIsRegistered;
     private ProgressDialog progressDialog = null;
 
     //private final String LOG_TAG = TrackPlayerDialogFragment.class.getSimpleName();

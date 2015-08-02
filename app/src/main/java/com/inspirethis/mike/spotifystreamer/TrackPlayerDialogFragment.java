@@ -242,7 +242,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
             // resuming an existing track play
-            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) { //todo commented this one..
+            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
                 playTrack(null, Constants.ACTION.RESUME_ACTION);
                 saveTracksInfo();
             }
@@ -465,7 +465,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
-    // TODO: add this method to Utility class
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
     private String milliSecondsToTimer(long milliseconds) {
         String finalTimerString = "";

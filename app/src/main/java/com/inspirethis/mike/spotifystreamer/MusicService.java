@@ -80,7 +80,7 @@ public class MusicService extends Service implements OnCompletionListener,
         mMediaPlayer.reset();
 
         songEnded = 0;
-        TRACK_PLAYING = false;  // TODO: these arent needed
+        TRACK_PLAYING = false;
         TRACK_PAUSED = false;
     }
 

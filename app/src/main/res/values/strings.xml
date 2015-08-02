@@ -36,4 +36,6 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="dont_show_again">Don\'t show again</string>
+    <string name="settings">Settings: </string>
+    <string name="done">Done</string>
 </resources>

@@ -461,7 +461,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
-    private String milliSecondsToTimer(long milliseconds) { // // TODO: 7/27/15 move to util class 
+    private String milliSecondsToTimer(long milliseconds) {
         String finalTimerString = "";
         String secondsString = "";
 

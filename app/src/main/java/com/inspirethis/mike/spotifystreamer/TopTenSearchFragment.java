@@ -106,7 +106,7 @@ public class TopTenSearchFragment extends Fragment {
                 TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);
 
                 Bundle bundle = new Bundle();
-                bundle.putInt("current_index", mCurrentIndex); //// TODO: 7/2/15 create static TAG for keys. store these in Constants class
+                bundle.putInt("current_index", mCurrentIndex);
                 bundle.putParcelableArrayList("track_items", mTrackItems);
 
 

@@ -41,7 +41,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
     private int mCurrentIndex;
 
     private SharedPreferences mSharedPreferences;
-    
+
     // for keeping track of when user navigates back from MainActivity through "Now Playing" button
     private boolean mNavBack;
     //private int mSavedPosition;
@@ -100,7 +100,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
             mTwoPane = false;
         }
         mSettings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        COUNTRY_CODE = mSettings.getString("country_code", "US"); // TODO: 7/11/15 create constant tags for keys
+        COUNTRY_CODE = mSettings.getString("country_code", "US"); 
     }
 
 
@@ -219,8 +219,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                             ft.commit();
                         }
                     }
-                } else
-                    Toast.makeText(getApplicationContext(), "we cant do this, sorry..", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             case R.id.action_settings:
                 View view = View.inflate(this, R.layout.settings, null);
@@ -232,10 +231,10 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                     }
                 });
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Settings: "); //// TODO: 8/1/15 add these strings to resources
+                builder.setTitle(getResources().getString(R.string.settings));
                 builder.setView(view)
                         .setCancelable(false)
-                        .setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                        .setPositiveButton(getResources().getString(R.string.done), new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
 
                             }

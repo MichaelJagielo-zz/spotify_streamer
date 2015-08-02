@@ -41,7 +41,6 @@ public class TopTenSearchFragment extends Fragment {
     private int mCurrentIndex;
     private String mArtist;
     private String mID;
-    //private boolean mTwoPane;
 
     public TopTenSearchFragment() {
     }
@@ -103,8 +102,6 @@ public class TopTenSearchFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
                 mCurrentIndex = position;
-                //TrackItem trackItem = mToptenAdapter.getItem(mCurrentIndex);//// TODO: 8/2/15 remove
-
                 Bundle bundle = new Bundle();
                 bundle.putInt("current_index", mCurrentIndex);
                 bundle.putParcelableArrayList("track_items", mTrackItems);

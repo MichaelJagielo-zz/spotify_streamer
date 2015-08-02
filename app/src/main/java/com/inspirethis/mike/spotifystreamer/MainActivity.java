@@ -2,6 +2,7 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DialogFragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,7 +43,6 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
 
     // for keeping track of when user navigates back from MainActivity through "Now Playing" button
     private boolean mNavBack;
-    //private int mSavedPosition;
     private int mMaxPosition;
     private int mCurrentPosition;
     private String mCurrentTime;
@@ -239,9 +239,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
                         }).show();
                 break;
         }
-
         return super.onOptionsItemSelected(item);
-
     }
 
     private void clearPreferences() {
@@ -302,9 +300,23 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
 
     @Override
     public void onBackPressed() {
-        Intent mainActivity = new Intent(Intent.ACTION_MAIN);
-        mainActivity.addCategory(Intent.CATEGORY_HOME);
-        mainActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(mainActivity);
+        if (!mTwoPane) {
+            Intent mainActivity = new Intent(Intent.ACTION_MAIN);
+            mainActivity.addCategory(Intent.CATEGORY_HOME);
+            mainActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(mainActivity);
+        } else {
+            super.onBackPressed();
+
+            DialogFragment dialogFragment = (DialogFragment) this.getFragmentManager().findFragmentByTag("trackPlayerFragmentOverlay");
+            if (dialogFragment != null) {
+                dialogFragment.dismiss();
+            } else if (isTaskRoot()) {
+                Intent mainActivity = new Intent(Intent.ACTION_MAIN);
+                mainActivity.addCategory(Intent.CATEGORY_HOME);
+                mainActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(mainActivity);
+            }
+        }
     }
 }

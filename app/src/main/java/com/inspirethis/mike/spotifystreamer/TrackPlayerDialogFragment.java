@@ -237,7 +237,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
             // resuming an existing track play
-           // if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
             if (mTrackEndedFlag != 1) {
                 playTrack(null, Constants.ACTION.RESUME_ACTION);
                 saveTracksInfo();

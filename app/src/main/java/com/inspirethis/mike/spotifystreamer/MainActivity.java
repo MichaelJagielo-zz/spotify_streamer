@@ -100,7 +100,7 @@ public class MainActivity extends Activity implements ArtistSearchFragment.Callb
             mTwoPane = false;
         }
         mSettings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        COUNTRY_CODE = mSettings.getString("country_code", "US"); 
+        COUNTRY_CODE = mSettings.getString("country_code", "US");
     }
 
 

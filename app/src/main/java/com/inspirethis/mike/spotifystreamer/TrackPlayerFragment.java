@@ -105,6 +105,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private int mCurrentPosition;
     private String mCurrentTime;
     private String mFinalTime;
+    //private boolean mPausedOnRebuild;
+    //private String mUrl;
 
     private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
@@ -158,6 +160,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             mCurrentTime = savedInstanceState.getString("current_time");
             mFinalTime = savedInstanceState.getString("final_time");
             mNavBack = savedInstanceState.getBoolean("nav_back");
+            //mPausedOnRebuild = savedInstanceState.getBoolean("paused_on_rebuild");
+//            mUrl = savedInstanceState.getString("url");
 
             // if Now Playing button was clicked
             SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
@@ -242,16 +246,20 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     @OnClick(R.id.buttonPlay)
     public void playPause() {
         if (!MusicService.TRACK_PLAYING) {
+            //Log.d(LOG_TAG, "playPause method: mPausedOnRebuild value: " + mPausedOnRebuild );
+            Log.d(LOG_TAG, "playPause method: mTrackEndedFlag value: " + mTrackEndedFlag);
+            Log.d(LOG_TAG, "playPause method: (mSeekBar.getProgress() > 0) value: " + (mSeekBar.getProgress() > 0));
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
             // resuming an existing track play
-            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
+            if (mTrackEndedFlag != 1) {
                 playTrack(null, Constants.ACTION.RESUME_ACTION);
                 saveTracksInfo();
-            }
-            // start new track
-            else
+                Log.d(LOG_TAG, "on PLay pause: resuming: this is correct path to resume track");
+            } else { // start new track
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
+                Log.d(LOG_TAG, "on PLay pause: resuming?? then shouldnt be here..");
+            }
 
             // replaying an existing track that has ended
         } else if (mTrackEndedFlag == 1) {
@@ -345,6 +353,8 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             e.putString("current_time", tvCurrentTime.getText().toString());
             e.putString("final_time", tvFinalTime.getText().toString());
             e.putBoolean("nav_back", mNavBack);
+//            if (mUrl != null)
+//                e.putString("url", mUrl);
             e.commit();
         }
     }
@@ -359,6 +369,13 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         outState.putString("current_time", tvCurrentTime.getText().toString());
         outState.putString("final_time", tvFinalTime.getText().toString());
         outState.putBoolean("nav_back", mNavBack);
+//        if (!MusicService.TRACK_PLAYING)
+//            outState.putBoolean("paused_on_rebuild", true);
+//        else
+//            outState.putBoolean("paused_on_rebuild", false);
+//        if (mUrl != null) {
+//            outState.putString("url", mUrl);
+//        }
     }
 
 
@@ -398,7 +415,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         } else if (MusicService.TRACK_PAUSED) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             mSeekBar.setMax(mMaxPosition);
-            mSeekBar.setProgress(mSavedPosition / 1000);
+            mSeekBar.setProgress(mCurrentPosition);
             tvFinalTime.setText(mFinalTime);
             tvCurrentTime.setText(mCurrentTime);
         }
@@ -543,7 +560,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             if (url != null)
                 startIntent.putExtra("sentAudioLink", url);
 
-
             startIntent.setAction(action);
             getActivity().startService(startIntent);
         } else {
@@ -571,7 +587,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 }
                 break;
             case 2:
-                btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
+                //btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
                 break;
         }
     }

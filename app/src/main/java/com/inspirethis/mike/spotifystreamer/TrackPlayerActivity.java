@@ -13,6 +13,10 @@ public class TrackPlayerActivity extends FragmentActivity {
     private int mCurrentIndex;
     private boolean mTwoPane;
     private boolean mNavBack;
+    private int mCurrentPosition;
+    private int mMaxPosition;
+    private String mCurrentTime;
+    private String mFinalTime;
 
 
     @Override
@@ -25,21 +29,11 @@ public class TrackPlayerActivity extends FragmentActivity {
             mCurrentIndex = savedInstanceState.getInt("current_index");
         } else {
             Bundle extras = getIntent().getExtras();
-            mNavBack = extras.getBoolean("nav_back");
-            mTwoPane = extras.getBoolean("two_pane");
-            int index = extras.getInt("current_index");
-            ArrayList<TrackItem> list = extras.getParcelableArrayList("track_items");
-
-            Bundle bundle = new Bundle();
-            bundle.putInt("current_index", index);
-            bundle.putParcelableArrayList("track_items", list);
-            bundle.putBoolean("nav_back", mNavBack);
-
             if (!mTwoPane) {
                 // instantiate fragment for phone
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 TrackPlayerFragment trackPlayerFragment = new TrackPlayerFragment();
-                trackPlayerFragment.setArguments(bundle);
+                trackPlayerFragment.setArguments(extras);
                 ft.add(R.id.playTrack, trackPlayerFragment, "trackPlayerFragment");
                 ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
                 ft.commit();

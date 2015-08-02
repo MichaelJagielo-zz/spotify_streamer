@@ -1,6 +1,7 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.DialogFragment;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -81,7 +83,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
     // for keeping track of when user navigates back from MainActivity through "Now Playing" button
     private boolean mNavBack;
-    private boolean mPaused;
 
     private int mSavedPosition;
     private int mMaxPosition;
@@ -89,7 +90,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     private String mCurrentTime;
     private String mFinalTime;
 
-    private View mView;
+    //private View mView;
 
     private static int mTrackEndedFlag = 0;
     boolean mBroadcastIsRegistered;
@@ -100,15 +101,10 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     Intent mServiceIntent;
 
     // Progress dialogue and broadcast receiver variables
-//    boolean mBufferBroadcastIsRegistered;
-//    private ProgressDialog progressDialog = null;
+    boolean mBufferBroadcastIsRegistered;
+    private ProgressDialog progressDialog = null;
 
-    private final String LOG_TAG = TrackPlayerDialogFragment.class.getSimpleName();
-
-    public interface ActionBarCallback {
-        public void enable(boolean bool);
-    }
-
+    //private final String LOG_TAG = TrackPlayerDialogFragment.class.getSimpleName();
 
     public TrackPlayerDialogFragment() {
     }
@@ -122,6 +118,11 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             Bundle bundle = getArguments();
             if (bundle != null) {
                 mCurrentIndex = bundle.getInt("current_index");
+                mCurrentPosition = bundle.getInt("current_position");
+                mMaxPosition = bundle.getInt("max_position");
+                mCurrentTime = bundle.getString("current_time");
+                mFinalTime = bundle.getString("final_time");
+
                 mTrackItems = bundle.getParcelableArrayList("track_items");
                 mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
                 mNavBack = bundle.getBoolean("nav_back", false); // if true dont play track
@@ -130,18 +131,15 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
                     FetchTrackTask task = new FetchTrackTask();
                     task.execute(mCurrentTrackItem.getSpotifyId());
                 } else if (mNavBack) {
-                    if (!MusicService.TRACK_PLAYING) {
+                    if (mCurrentTrackItem == null)
+                        Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
+                    else if (MusicService.TRACK_PLAYING) {
                         playTrack(null, Constants.ACTION.RESUME_ACTION);
                     }
-
                     if (MusicService.songEnded == 1) {
                         FetchTrackTask task = new FetchTrackTask();
                         task.execute(mCurrentTrackItem.getSpotifyId());
                     }
-
-                    if (mCurrentTrackItem == null)
-                        Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
-
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
                 }
@@ -155,7 +153,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             mMaxPosition = savedInstanceState.getInt("max_position");
             mCurrentTime = savedInstanceState.getString("current_time");
             mFinalTime = savedInstanceState.getString("final_time");
-            mPaused = savedInstanceState.getBoolean("paused");
             mNavBack = savedInstanceState.getBoolean("nav_back");
 
             // if Now Playing button was clicked
@@ -166,13 +163,11 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
                 mCurrentPosition = prefs.getInt("current_position", 0);
                 mCurrentTime = prefs.getString("current_time", "");
                 mFinalTime = prefs.getString("final_time", "");
-                ((ActionBarCallback) getActivity()).enable(true);
             }
-
             if (mCurrentTrackItem == null)
                 Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
         }
-        //registerBufferReceiver();
+        registerBufferReceiver();
         registerReceiver();
     }
 
@@ -188,31 +183,23 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         switch (item.getItemId()) {
             case 0:
                 if (MusicService.SERVICE_RUNNING) {
-                    //unregisterReceivers();
                     Intent quitIntent = new Intent(getActivity(), MusicService.class);
                     quitIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
                     getActivity().startService(quitIntent);
                 }
                 clearPreferences();
                 getActivity().finish();
-
-
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
     private void clearPreferences() {
         SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.commit();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        unregisterReceivers();
     }
 
     // Broadcast Receiver to update position of seekBar from service
@@ -255,7 +242,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             // track is not playing, get ready to play
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
             // resuming an existing track play
-            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) {
+            if (mSeekBar.getProgress() > 0 && mTrackEndedFlag != 1) { //todo commented this one..
                 playTrack(null, Constants.ACTION.RESUME_ACTION);
                 saveTracksInfo();
             }
@@ -294,6 +281,10 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             // url arg not needed as it resides in MusicService
             playTrack(null, Constants.ACTION.PAUSE_ACTION);
+
+        } else if (MusicService.TRACK_PAUSED) {
+            btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
+            playTrack(null, Constants.ACTION.RESUME_ACTION);
         }
     }
 
@@ -355,23 +346,16 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             e.putInt("list_size", mTrackItems.size());
             e.putInt("current_index", mCurrentIndex);
             e.putInt("current_position", mSeekBar.getProgress());
+            e.putInt("max_position", mSeekBar.getMax());
             e.putString("current_time", tvCurrentTime.getText().toString());
             e.putString("final_time", tvFinalTime.getText().toString());
+            e.putBoolean("nav_back", mNavBack);
             e.commit();
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-//        super.onSaveInstanceState(outState);
-//        outState.putParcelableArrayList("track_items", mTrackItems);
-//        outState.putInt("current_index", mCurrentIndex);
-//        outState.putInt("current_position", mSeekBar.getProgress());
-//        outState.putString("current_time", tvCurrentTime.getText().toString());
-//        outState.putString("final_time", tvFinalTime.getText().toString());
-//        unregisterReceivers();
-
-
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList("track_items", mTrackItems);
         outState.putInt("current_index", mCurrentIndex);
@@ -379,10 +363,7 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         outState.putInt("max_position", mSeekBar.getMax());
         outState.putString("current_time", tvCurrentTime.getText().toString());
         outState.putString("final_time", tvFinalTime.getText().toString());
-        outState.putBoolean("paused", !MusicService.TRACK_PLAYING);
-        outState.putBoolean("nav_back",mNavBack);
-
-        //unregisterReceivers();
+        outState.putBoolean("nav_back", mNavBack);
     }
 
     // helper method called with previous or next button click
@@ -416,13 +397,13 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         btnNext.setBackgroundResource(android.R.drawable.ic_media_next);
         btnPrevious.setBackgroundResource(android.R.drawable.ic_media_previous);
 
-        // reloading trackPlayer info after device rotate / rebuilding fragment
+        // reloading trackPlayer info after fragment went down on device rotate or back button / rebuilding fragment
         if (MusicService.TRACK_PLAYING) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-        } else if (mPaused) {
+        } else if (MusicService.TRACK_PAUSED) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             mSeekBar.setMax(mMaxPosition);
-            mSeekBar.setProgress(mSavedPosition/1000);
+            mSeekBar.setProgress(mCurrentPosition);
             tvFinalTime.setText(mFinalTime);
             tvCurrentTime.setText(mCurrentTime);
         }
@@ -434,18 +415,13 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
         try {
             mServiceIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
-
             // seekBarIntent for broadcasting new position to service
             seekBarIntent = new Intent(BROADCAST_SEEKBAR);
             mSeekBar.setOnSeekBarChangeListener(this);
-//            startProgressDialog();
         } catch (Exception e) {
             e.printStackTrace();
         }
         mNavBack = false;
-//// TODO: 7/25/15 fix the keyboard popping up.
-
-       // getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         return rootView;
     }
 
@@ -477,18 +453,12 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         protected void onPostExecute(Track result) {
             if (result != null) {
                 mTrack = result;
-
                 // instantiate MusicService upon fetch of Track
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-
                 if (!MusicService.SERVICE_RUNNING) {
                     initService();
                 }
-
-                ((ActionBarCallback) getActivity()).enable(true);
-                getActivity().invalidateOptionsMenu();
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
-
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
             }
@@ -525,49 +495,35 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
 
 
     private void registerReceiver() {
-
-        if (!mBroadcastIsRegistered) {
             getActivity().registerReceiver(mBroadcastReceiver, new IntentFilter(
                     MusicService.BROADCAST_ACTION));
-            mBroadcastIsRegistered = true;
-        }
-
-//        if (!mBufferBroadcastIsRegistered) {
-//            getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
-//                    MusicService.BROADCAST_ACTION));
-//            mBufferBroadcastIsRegistered = true;
-//        }
     }
 
-//    private void registerBufferReceiver() {
-//        if (!mBufferBroadcastIsRegistered) {
-//            getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
-//                    MusicService.BROADCAST_BUFFER));
-//            mBufferBroadcastIsRegistered = true;
-//        }
-//    }
+    private void registerBufferReceiver() {
+            getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
+                    MusicService.BROADCAST_BUFFER));
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        unregisterReceivers();
+    }
+
 
     private void unregisterReceivers() {
         // unregister mBroadcastReceiver for seekBar
-        if (mBroadcastIsRegistered) {
-            try {
-                getActivity().unregisterReceiver(mBroadcastReceiver);
-                mBroadcastIsRegistered = false;
-            } catch (Exception e) {
-                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
-                e.printStackTrace();
-            }
+        try {
+            getActivity().unregisterReceiver(mBroadcastReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-//        if (mBufferBroadcastIsRegistered) {
-//            try {
-//                getActivity().unregisterReceiver(mBroadcastBufferReceiver);
-//                mBufferBroadcastIsRegistered = false;
-//            } catch (Exception e) {
-//                Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
-//                e.printStackTrace();
-//            }
-//        }
+        try {
+            getActivity().unregisterReceiver(mBroadcastBufferReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void initService() {
@@ -576,9 +532,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
             Intent startIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
             startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
-
-            registerReceiver();
-
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
                     getResources().getString(R.string.network_connection_needed),
@@ -587,7 +540,6 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     }
 
     private void playTrack(Track track, String action) {
-//        removePhoneKeypad(mView);
         mTrackEndedFlag = 0;
         String url = null;
         if (track != null)
@@ -608,70 +560,53 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
         }
     }
 
-//    // progress dialogue for buffering
-//    private void showProgressDialog(Intent bufferIntent) {
-//        String bufferValue = bufferIntent.getStringExtra("buffering");
-//        int bufferIntValue = Integer.parseInt(bufferValue);
-//
-//        switch (bufferIntValue) {
-//
-//            case 0:
-//                if (null != progressDialog) {
-//                    progressDialog.dismiss();
-//                }
-//                break;
-//
-//            case 1:
-//                if (progressDialog == null) {
-//                    progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_LIGHT);
-//                    progressDialog.setTitle(getResources().getString(R.string.loading_media));
-//                    progressDialog.show();
-//                }
-//                break;
-//
-//            case 2:
-//                //btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
-//                break;
-//        }
-//    }
-//
-//    private void startProgressDialog() {
-//        if (progressDialog == null && !MusicService.SERVICE_RUNNING) {
-//            progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_LIGHT);
-//            progressDialog.setTitle(getResources().getString(R.string.loading_media));
-//            progressDialog.show();
-//        }
-//    }
-//    private void hideKeyboard() {
-//
-//        getActivity().getWindow().setSoftInputMode(
-//                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-//        // Check if no view has focus:
-////        View view = getActivity().getCurrentFocus();
-////        if (view != null) {
-////            InputMethodManager inputManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-////            inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-////        }
-//    }
+    // progress dialogue for buffering
+    private void showProgressDialog(Intent bufferIntent) {
+        String bufferValue = bufferIntent.getStringExtra("buffering");
+        int bufferIntValue = Integer.parseInt(bufferValue);
 
-//    public void removePhoneKeypad(View view) {
-//        InputMethodManager inputManager = (InputMethodManager) view
-//                .getContext()
-//                .getSystemService(Context.INPUT_METHOD_SERVICE);
-//
-//        IBinder binder = view.getWindowToken();
-//        inputManager.hideSoftInputFromWindow(binder,
-//                InputMethodManager.HIDE_NOT_ALWAYS);
-//    }
+        switch (bufferIntValue) {
 
+            case 0:
+                if (null != progressDialog) {
+                    progressDialog.dismiss();
+                }
+                break;
 
-//    // Set up broadcast receiver
-//    private BroadcastReceiver mBroadcastBufferReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent bufferIntent) {
-//            showProgressDialog(bufferIntent);
-//        }
-//    };
+            case 1:
+                if (progressDialog == null) {
+                    progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_LIGHT);
+                    progressDialog.setTitle(getResources().getString(R.string.loading_media));
+                    progressDialog.show();
+                }
+                break;
+
+            case 2:
+                //btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
+                break;
+        }
+    }
+
+    private void startProgressDialog() {
+        if (progressDialog == null && !MusicService.SERVICE_RUNNING) {
+            progressDialog = new ProgressDialog(getActivity(), ProgressDialog.THEME_HOLO_LIGHT);
+            progressDialog.setTitle(getResources().getString(R.string.loading_media));
+            progressDialog.show();
+        }
+    }
+
+    private void hideKeyboard() {
+        getActivity().getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    // Set up broadcast receiver
+    private BroadcastReceiver mBroadcastBufferReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent bufferIntent) {
+            showProgressDialog(bufferIntent);
+        }
+    };
 
     // unregister broadcast receiver
     // pass data to store
@@ -679,14 +614,18 @@ public class TrackPlayerDialogFragment extends DialogFragment implements SeekBar
     public void onPause() {
         super.onPause();
         saveTracksInfo();
-        //unregisterReceivers();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceivers();
     }
 
 
     // register broadcast receiver
     @Override
     public void onResume() {
-        registerReceiver();
         super.onResume();
     }
 

@@ -87,8 +87,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
 
     // for keeping track of when user navigates back from MainActivity through "Now Playing" button
     private boolean mNavBack;
-    private boolean mPaused;
-
     Intent mServiceIntent;
 
     private static int mTrackEndedFlag = 0;
@@ -107,7 +105,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private int mCurrentPosition;
     private String mCurrentTime;
     private String mFinalTime;
-    private boolean mEnabled;
 
     private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
@@ -124,8 +121,14 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 mCurrentIndex = bundle.getInt("current_index");
                 mTrackItems = bundle.getParcelableArrayList("track_items");
                 mCurrentTrackItem = mTrackItems.get(mCurrentIndex);
-                Log.d(LOG_TAG, "onCreate: mCurrentTrackItem name: " + mCurrentTrackItem.getName());
-                mNavBack = bundle.getBoolean("nav_back", false); // if true dont play track
+                mCurrentPosition = bundle.getInt("current_position");
+                mMaxPosition = bundle.getInt("max_position");
+                mCurrentTime = bundle.getString("current_time");
+                mFinalTime = bundle.getString("final_time");
+
+
+                //Log.d(LOG_TAG, "onCreate: mCurrentTrackItem name: " + mCurrentTrackItem.getName());
+                mNavBack = bundle.getBoolean("nav_back"); // if true dont play track
                 // get started playing that first track
                 if (mCurrentTrackItem != null && !mNavBack) {
                     FetchTrackTask task = new FetchTrackTask();
@@ -134,7 +137,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                     if (mCurrentTrackItem == null)
                         Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
 
-                    else if (!MusicService.TRACK_PLAYING) {
+                    else if (MusicService.TRACK_PLAYING) {
                         playTrack(null, Constants.ACTION.RESUME_ACTION);
 
                     } else if (MusicService.songEnded == 1) {
@@ -154,9 +157,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             mMaxPosition = savedInstanceState.getInt("max_position");
             mCurrentTime = savedInstanceState.getString("current_time");
             mFinalTime = savedInstanceState.getString("final_time");
-            mPaused = savedInstanceState.getBoolean("paused");
             mNavBack = savedInstanceState.getBoolean("nav_back");
-            mEnabled = savedInstanceState.getBoolean("enabled");
 
             // if Now Playing button was clicked
             SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
@@ -166,10 +167,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 mCurrentPosition = prefs.getInt("current_position", 0);
                 mCurrentTime = prefs.getString("current_time", "");
                 mFinalTime = prefs.getString("final_time", "");
-                if (!MusicService.TRACK_PLAYING) {
-                    playTrack(null, Constants.ACTION.RESUME_ACTION);
-                }
-
             }
 
             if (mCurrentTrackItem == null)
@@ -177,6 +174,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         }
         registerBufferReceiver();
         registerReceiver();
+        startProgressDialog();
     }
 
     @Override
@@ -286,6 +284,9 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             // url arg not needed as it resides in MusicService
             playTrack(null, Constants.ACTION.PAUSE_ACTION);
+        } else if (MusicService.TRACK_PAUSED) {
+            btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
+            playTrack(null, Constants.ACTION.RESUME_ACTION);
         }
     }
 
@@ -343,9 +344,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             e.putInt("max_position", mSeekBar.getMax());
             e.putString("current_time", tvCurrentTime.getText().toString());
             e.putString("final_time", tvFinalTime.getText().toString());
-            e.putBoolean("paused", !MusicService.TRACK_PLAYING);
             e.putBoolean("nav_back", mNavBack);
-            e.putBoolean("enabled", mEnabled);
             e.commit();
         }
     }
@@ -359,9 +358,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         outState.putInt("max_position", mSeekBar.getMax());
         outState.putString("current_time", tvCurrentTime.getText().toString());
         outState.putString("final_time", tvFinalTime.getText().toString());
-        outState.putBoolean("paused", !MusicService.TRACK_PLAYING);
         outState.putBoolean("nav_back", mNavBack);
-        outState.putBoolean("enabled", mEnabled);
     }
 
 
@@ -398,7 +395,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
         // reloading trackPlayer info after device rotate / rebuilding fragment
         if (MusicService.TRACK_PLAYING) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-        } else if (mPaused) {
+        } else if (MusicService.TRACK_PAUSED) {
             btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_play);
             mSeekBar.setMax(mMaxPosition);
             mSeekBar.setProgress(mSavedPosition / 1000);
@@ -417,7 +414,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             // seekBarIntent for broadcasting new position to service
             seekBarIntent = new Intent(BROADCAST_SEEKBAR);
             mSeekBar.setOnSeekBarChangeListener(this);
-            //startProgressDialog();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -454,13 +450,10 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 mTrack = result;
                 // instantiate MusicService upon fetch of Track
                 btnPlayPause.setBackgroundResource(android.R.drawable.ic_media_pause);
-
                 if (!MusicService.SERVICE_RUNNING) {
                     initService();
                 }
-                MainActivity.setNowPlayingItem(true);
                 playTrack(mTrack, Constants.ACTION.PLAY_ACTION);
-                mEnabled = true;
             } else {
                 Toast.makeText(getActivity(), getResources().getString(R.string.track_not_found), Toast.LENGTH_SHORT).show();
             }
@@ -468,7 +461,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
     // credit source: http://stackoverflow.com/questions/21447798/how-to-display-current-time-of-song-in-textview
-    private String milliSecondsToTimer(long milliseconds) {
+    private String milliSecondsToTimer(long milliseconds) { // // TODO: 7/27/15 move to util class 
         String finalTimerString = "";
         String secondsString = "";
 
@@ -493,36 +486,24 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     }
 
     private void registerReceiver() {
-        if (!mBroadcastIsRegistered) {
-            getActivity().getApplicationContext().registerReceiver(mBroadcastReceiver, new IntentFilter(
-                    MusicService.BROADCAST_ACTION));
-            mBroadcastIsRegistered = true;
-        }
-
+        getActivity().getApplicationContext().registerReceiver(mBroadcastReceiver, new IntentFilter(
+                MusicService.BROADCAST_ACTION));
     }
 
     private void registerBufferReceiver() {
-        if (!mBufferBroadcastIsRegistered) {
-            getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
-                    MusicService.BROADCAST_BUFFER));
-            mBufferBroadcastIsRegistered = true;
-        }
+        getActivity().registerReceiver(mBroadcastBufferReceiver, new IntentFilter(
+                MusicService.BROADCAST_BUFFER));
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        Log.d(LOG_TAG, "onDestroyView: mEnabled: " + mEnabled + "  ------------------ ----------------- ------------------ ** ");
         unregisterReceivers();
     }
 
 
     private void unregisterReceivers() {
         // unregister mBroadcastReceiver for seekBar
-
-        //if (mBroadcastReceiver != null && mBroadcastIsRegistered) {
-
-        //if (MusicService.mBroadcastReceiverRegistered) {
         try {
             getActivity().unregisterReceiver(mBroadcastReceiver);
             mBroadcastIsRegistered = false;
@@ -530,8 +511,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
             e.printStackTrace();
         }
-        // }
-        //if (mBroadcastBufferReceiver != null && mBufferBroadcastIsRegistered) {
         try {
             getActivity().unregisterReceiver(mBroadcastBufferReceiver);
             mBufferBroadcastIsRegistered = false;
@@ -539,7 +518,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             Log.d(LOG_TAG, getResources().getString(R.string.broadcast_register_error), e);
             e.printStackTrace();
         }
-        // }
     }
 
     private void initService() {
@@ -548,9 +526,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             Intent startIntent = new Intent(getActivity().getApplicationContext(), MusicService.class);
             startIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             getActivity().startService(startIntent);
-
-            //registerReceiver();
-
         } else {
             Toast.makeText(getActivity().getApplicationContext(),
                     getResources().getString(R.string.network_connection_needed),
@@ -567,7 +542,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
             Intent startIntent = new Intent(getActivity(), MusicService.class);
             if (url != null)
                 startIntent.putExtra("sentAudioLink", url);
-            startIntent.putExtra("largeImagePath", mCurrentTrackItem.getImage_path_large());
             startIntent.setAction(action);
             getActivity().startService(startIntent);
         } else {
@@ -575,7 +549,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                     getResources().getString(R.string.network_connection_needed),
                     Toast.LENGTH_LONG).show();
         }
-        registerReceiver();
     }
 
     // progress dialogue for buffering
@@ -634,7 +607,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     // register broadcast receiver
     @Override
     public void onResume() {
-        //registerReceiver();
         super.onResume();
     }
 

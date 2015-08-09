@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
     <application
@@ -33,21 +34,26 @@
             android:name=".MusicService"
             android:enabled="true"
             android:icon="@mipmap/greyscale_thumb"
-            android:label="@string/service_name" >
+            android:label="@string/service_name">
 
         </service>
 
         <activity
             android:name=".TopTenSearchActivity"
-            android:label="@string/title_activity_top_ten_search"/>
+            android:label="@string/title_activity_top_ten_search"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
 
         <activity
             android:name=".TrackPlayerActivity"
             android:label="@string/title_activity_track_player"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".TopTenSearchActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity"/>
+                android:value=".TopTenSearchActivity" />
         </activity>
 
     </application>

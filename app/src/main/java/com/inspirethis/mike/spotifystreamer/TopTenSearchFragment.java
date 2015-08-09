@@ -2,7 +2,9 @@ package com.inspirethis.mike.spotifystreamer;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,7 +35,6 @@ import retrofit.client.Response;
  * Created by mike on 6/15/15.
  */
 public class TopTenSearchFragment extends Fragment {
-
     //private final String LOG_TAG = TopTenSearchFragment.class.getSimpleName();
 
     private TopTenListViewAdapter mToptenAdapter;
@@ -44,6 +45,7 @@ public class TopTenSearchFragment extends Fragment {
 
     public TopTenSearchFragment() {
     }
+
 
     private void performSearch(String search) {
         if (Utility.isConnected(getActivity().getApplicationContext())) {
@@ -61,6 +63,7 @@ public class TopTenSearchFragment extends Fragment {
         } else {
             mTrackItems = savedInstanceState.getParcelableArrayList("track items");
         }
+
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
 
@@ -69,11 +72,15 @@ public class TopTenSearchFragment extends Fragment {
             mArtist = bundle.getString("artist_name");
             mID = bundle.getString("artist_id");
             Log.d("", "mID value in topTenSearchFragment: " + mID);
-            if (mTrackItems.size() == 0)
-                    performSearch(mID);
+            if (mTrackItems == null || mTrackItems.size() == 0) {
+                if (mID == null) {
+                    SharedPreferences prefs = getActivity().getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+                    mID = prefs.getString("id", "");
+                }
+            }
+            performSearch(mID);
         }
     }
-
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -104,6 +111,7 @@ public class TopTenSearchFragment extends Fragment {
                 mCurrentIndex = position;
                 Bundle bundle = new Bundle();
                 bundle.putInt("current_index", mCurrentIndex);
+                bundle.putString("id", mID);
                 bundle.putParcelableArrayList("track_items", mTrackItems);
 
 
@@ -128,11 +136,8 @@ public class TopTenSearchFragment extends Fragment {
         return rootView;
     }
 
-
-
-
     private void fetchTopTen(String id) {
-Log.d("", " in fetchTopTen: id: " + id);
+        Log.d("", " in fetchTopTen: id: " + id);
         Map<String, Object> queryMap = new HashMap<>();
         queryMap.put(SpotifyService.COUNTRY, MainActivity.COUNTRY_CODE);
 
@@ -191,7 +196,5 @@ Log.d("", " in fetchTopTen: id: " + id);
                 });
             }
         });
-
     }
-
 }

@@ -1,9 +1,13 @@
 package com.inspirethis.mike.spotifystreamer;
 
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NavUtils;
 import android.view.Menu;
+import android.view.MenuItem;
 
 import java.util.ArrayList;
 
@@ -16,19 +20,24 @@ public class TrackPlayerActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track_player);
-
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         if (savedInstanceState != null) {
             mTrackItems = savedInstanceState.getParcelableArrayList("track_items");
             mCurrentIndex = savedInstanceState.getInt("current_index");
         } else {
             Bundle extras = getIntent().getExtras();
-                // instantiate fragment for phone
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                TrackPlayerFragment trackPlayerFragment = new TrackPlayerFragment();
-                trackPlayerFragment.setArguments(extras);
-                ft.add(R.id.playTrack, trackPlayerFragment, "trackPlayerFragment");
-                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-                ft.commit();
+            String id = extras.getString("id");
+            SharedPreferences prefs = getApplicationContext().getSharedPreferences("tracks_info", Context.MODE_PRIVATE);
+            SharedPreferences.Editor e = prefs.edit();
+            e.putString("id", id);
+            e.commit();
+            // instantiate fragment for phone
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            TrackPlayerFragment trackPlayerFragment = new TrackPlayerFragment();
+            trackPlayerFragment.setArguments(extras);
+            ft.add(R.id.playTrack, trackPlayerFragment, "trackPlayerFragment");
+            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+            ft.commit();
         }
     }
 
@@ -38,6 +47,17 @@ public class TrackPlayerActivity extends FragmentActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_track_player, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

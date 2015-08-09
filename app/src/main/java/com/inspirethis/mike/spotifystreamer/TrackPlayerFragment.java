@@ -105,12 +105,12 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     private int mCurrentPosition;
     private String mCurrentTime;
     private String mFinalTime;
+    private String mID;
 
     private final String LOG_TAG = TrackPlayerFragment.class.getSimpleName();
 
     public TrackPlayerFragment() {
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,6 +126,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                 mCurrentTime = bundle.getString("current_time");
                 mFinalTime = bundle.getString("final_time");
                 mNavBack = bundle.getBoolean("nav_back");
+                mID = bundle.getString("id");
                 // get started playing that first track
                 if (mCurrentTrackItem != null && !mNavBack) {
                     FetchTrackTask task = new FetchTrackTask();
@@ -191,6 +192,7 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
                     getActivity().startService(quitIntent);
                 }
                 getActivity().finish();
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -212,7 +214,6 @@ public class TrackPlayerFragment extends Fragment implements OnSeekBarChangeList
     };
 
     private void updateUI(Intent serviceIntent) {
-
         String strSongEnded = serviceIntent.getStringExtra("song_ended");
         String totalDuration = serviceIntent.getStringExtra("totalDuration");
         String currentDuration = serviceIntent.getStringExtra("currentDuration");
